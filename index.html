@@ -15,14 +15,15 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
     min-height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom, 16px);
     font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     user-select: none;
     touch-action: manipulation;
     overscroll-behavior: contain;
-    -webkit-overflow-scrolling: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* 背景粒子 */
@@ -415,11 +416,11 @@
 
     .header {
       flex-wrap: wrap;
-      gap: 4px 10px;
-      margin-bottom: 8px;
+      gap: 2px 8px;
+      margin-bottom: 6px;
     }
     .title {
-      font-size: 20px;
+      font-size: 18px;
       order: 1;
       flex: 1 1 auto;
     }
@@ -431,30 +432,30 @@
       order: 3;
       flex: 0 0 100%;
       justify-content: center;
-      gap: 14px;
+      gap: 12px;
     }
     .score-value {
-      font-size: 18px;
+      font-size: 16px;
     }
     .score-label {
-      font-size: 10px;
+      font-size: 9px;
     }
 
     .color-picker {
-      margin-bottom: 8px;
-      gap: 4px;
+      margin-bottom: 6px;
+      gap: 3px;
     }
     .color-dot {
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
     }
 
     .level-bar {
-      margin-bottom: 6px;
-      gap: 6px;
+      margin-bottom: 4px;
+      gap: 4px;
     }
-    .level-badge { font-size: 11px; }
-    .level-name  { font-size: 10px; }
+    .level-badge { font-size: 10px; }
+    .level-name  { font-size: 9px; }
 
     canvas {
       max-width: 100%;
@@ -467,11 +468,30 @@
     }
     .touch-hint {
       display: flex !important;
+      margin-top: 6px;
+      gap: 10px;
+      font-size: 10px;
     }
 
-    /* 显示虚拟方向键 */
+    /* D-pad 缩小 + 底部安全距离 */
     .dpad-wrap {
       display: flex !important;
+      margin-top: 8px;
+      padding-bottom: env(safe-area-inset-bottom, 4px);
+    }
+    .dpad {
+      grid-template-columns: repeat(3, 50px);
+      grid-template-rows: repeat(3, 50px);
+      gap: 3px;
+    }
+    .dpad-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      font-size: 20px;
+    }
+    .dpad-center {
+      font-size: 10px;
     }
 
     .overlay,
@@ -480,17 +500,17 @@
       border-radius: 8px;
     }
     .overlay-title {
-      font-size: 24px;
-    }
-    .level-overlay-title {
       font-size: 22px;
     }
+    .level-overlay-title {
+      font-size: 20px;
+    }
     .btn {
-      padding: 13px 30px;
-      font-size: 15px;
+      padding: 12px 26px;
+      font-size: 14px;
     }
     .pause-indicator {
-      font-size: 36px;
+      font-size: 32px;
     }
   }
 </style>
