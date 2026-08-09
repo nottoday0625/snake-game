@@ -409,6 +409,93 @@
   }
   #victoryDeaths { color: #f87171; }
 
+  /* ── 移动端适配 ──────────────────────────────── */
+  @media (max-width: 500px) {
+    body {
+      overflow-y: auto;
+      overflow-x: hidden;
+      align-items: flex-start;
+      padding-top: 8px;
+    }
+    .game-wrapper {
+      padding: 12px;
+      border-radius: 16px;
+      margin: 0 auto;
+    }
+    .header {
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+    }
+    .title {
+      font-size: 20px;
+    }
+    .scores {
+      gap: 12px;
+    }
+    .score-value {
+      font-size: 18px;
+    }
+    .score-label {
+      font-size: 9px;
+    }
+    .mode-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+    }
+    .leaderboard-btn {
+      width: 30px;
+      height: 30px;
+      font-size: 15px;
+    }
+    .color-picker {
+      margin-bottom: 8px;
+      gap: 4px;
+    }
+    .color-dot {
+      width: 18px;
+      height: 18px;
+    }
+    .level-bar {
+      margin-bottom: 6px;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .level-badge { font-size: 11px; }
+    .level-name { font-size: 10px; }
+    .level-stat { font-size: 10px; padding-left: 6px; }
+    .controls {
+      margin-top: 8px;
+      gap: 4px;
+    }
+    .key-hint { font-size: 10px; }
+    .key-badge { font-size: 9px; padding: 2px 5px; }
+    .btn {
+      padding: 8px 24px;
+      font-size: 14px;
+    }
+    .btn-secondary {
+      padding: 7px 14px !important;
+      font-size: 11px !important;
+    }
+    .overlay-title { font-size: 24px; }
+    .overlay-score { font-size: 14px; }
+    .victory-title { font-size: 22px; }
+    .victory-stats { gap: 16px; }
+    .victory-stat-value { font-size: 18px; }
+    .victory-stat-label { font-size: 10px; }
+    .victory-input { width: 180px; font-size: 14px; padding: 8px 12px; }
+    .victory-btns { gap: 6px; }
+    .lb-title { font-size: 16px; }
+    .lb-table { font-size: 11px; }
+    /* overlay 适配缩小的 padding */
+    .overlay { inset: 12px; }
+    .level-overlay { inset: 12px; }
+    .victory-overlay { inset: 12px; }
+    .leaderboard-overlay { inset: 12px; padding: 12px; }
+  }
+
   /* 颜色选择器 */
   .color-picker {
     display: flex;
@@ -726,14 +813,20 @@
   const liveDeathsEl       = document.getElementById('liveDeaths');
 
   // ── 常量 ─────────────────────────────────────────
-  const CELL   = 24;          // 每格像素
+  let   CELL   = 24;          // 每格像素（响应式，会根据屏幕调整）
   const COLS   = 24;          // 列数
   const ROWS   = 24;          // 行数
-  const WIDTH  = COLS * CELL;
-  const HEIGHT = ROWS * CELL;
+  let   WIDTH  = COLS * CELL;
+  let   HEIGHT = ROWS * CELL;
 
-  canvas.width  = WIDTH;
-  canvas.height = HEIGHT;
+  function applyCanvasSize() {
+    WIDTH  = COLS * CELL;
+    HEIGHT = ROWS * CELL;
+    canvas.width  = WIDTH;
+    canvas.height = HEIGHT;
+  }
+
+  applyCanvasSize();
 
   // ── 游戏状态 ─────────────────────────────────────
   let snake    = [];
@@ -1870,8 +1963,43 @@
   leaderboardBtn.addEventListener('click', showLeaderboard);
 
   // 排行榜弹窗也支持 Enter 关闭（如果未在输入框中）
+  // ── 屏幕自适应 ──────────────────────────────────
+  function fitToScreen() {
+    const isMobile = window.innerWidth < 500;
+    // 估算水平方向非画布空间：wrapper padding + 边距
+    const padH = isMobile ? 36 : 64;
+    // 估算垂直方向非画布空间：header+controls+padding+其他
+    const padV = isMobile ? 210 : 250;
+
+    const availW = window.innerWidth - padH;
+    const availH = window.innerHeight - padV;
+
+    const maxCell = 24;
+    const minCell = 8;
+
+    let newCell = Math.min(maxCell,
+      Math.floor(availW / COLS),
+      Math.floor(availH / ROWS)
+    );
+    newCell = Math.max(minCell, newCell);
+
+    if (newCell !== CELL) {
+      CELL = newCell;
+      applyCanvasSize();
+    }
+  }
+
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      fitToScreen();
+    }, 200);
+  });
+
   // ── 启动 ─────────────────────────────────────────
   function init() {
+    fitToScreen();
     createBgParticles();
     buildColorPicker();
     bestEl.textContent = highScore;
