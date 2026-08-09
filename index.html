@@ -2,10 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="format-detection" content="telephone=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🐍 贪吃蛇</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15,15 +12,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100dvh;
-    padding-bottom: env(safe-area-inset-bottom, 16px);
+    height: 100vh;
     font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden;
     user-select: none;
-    touch-action: manipulation;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
   }
 
   /* 背景粒子 */
@@ -51,7 +43,6 @@
       0 0 120px rgba(80, 120, 255, 0.05),
       inset 0 1px 0 rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.06);
-    touch-action: none;
   }
 
   .header {
@@ -104,8 +95,6 @@
     box-shadow:
       inset 0 0 40px rgba(0,0,0,0.5),
       0 0 0 1px rgba(255,255,255,0.04);
-    max-width: 100%;
-    height: auto;
   }
 
   .controls {
@@ -133,59 +122,6 @@
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
     min-width: 24px;
     text-align: center;
-  }
-
-  /* 虚拟方向键 (D-pad) — 桌面端隐藏 */
-  .dpad-wrap {
-    display: none;
-    justify-content: center;
-    margin-top: 12px;
-  }
-  .dpad {
-    display: grid;
-    grid-template-columns: repeat(3, 56px);
-    grid-template-rows: repeat(3, 56px);
-    gap: 4px;
-  }
-  .dpad-btn {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.04);
-    color: #aaa;
-    font-size: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    transition: background 0.1s;
-  }
-  .dpad-btn:active {
-    background: rgba(255,255,255,0.15);
-    color: #fff;
-  }
-  .dpad-up    { grid-column: 2; grid-row: 1; }
-  .dpad-left  { grid-column: 1; grid-row: 2; }
-  .dpad-center{ grid-column: 2; grid-row: 2; }
-  .dpad-right { grid-column: 3; grid-row: 2; }
-  .dpad-down  { grid-column: 2; grid-row: 3; }
-  .dpad-center {
-    opacity: 0.25;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    pointer-events: none;
-  }
-
-  /* 触摸提示 — 桌面端隐藏 */
-  .touch-hint {
-    display: none;
-    justify-content: center;
-    gap: 14px;
-    margin-top: 10px;
   }
 
   /* 游戏结束遮罩 */
@@ -257,6 +193,221 @@
   .pause-indicator.visible {
     opacity: 1;
   }
+
+  /* 排行榜按钮 */
+  .leaderboard-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+    line-height: 1;
+  }
+  .leaderboard-btn:hover {
+    background: rgba(255,255,255,0.12);
+    transform: scale(1.1);
+    box-shadow: 0 0 12px rgba(251, 191, 36, 0.2);
+  }
+
+  /* 通关胜利弹窗 */
+  .victory-overlay {
+    position: absolute;
+    inset: 24px;
+    border-radius: 12px;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s;
+    z-index: 6;
+  }
+  .victory-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .victory-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #fbbf24;
+    letter-spacing: 2px;
+  }
+  .victory-stats {
+    display: flex;
+    gap: 32px;
+  }
+  .victory-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .victory-stat-label {
+    font-size: 12px;
+    color: #94a3b8;
+    letter-spacing: 1px;
+  }
+  .victory-stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #e2e8f0;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+  .victory-input-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .victory-label {
+    font-size: 13px;
+    color: #94a3b8;
+  }
+  .victory-input {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 16px;
+    color: #e2e8f0;
+    text-align: center;
+    width: 220px;
+    outline: none;
+    font-family: 'Microsoft YaHei', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .victory-input:focus {
+    border-color: rgba(251, 191, 36, 0.5);
+    box-shadow: 0 0 12px rgba(251, 191, 36, 0.15);
+  }
+  .victory-input::placeholder {
+    color: #555;
+  }
+  .victory-btns {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .btn-secondary {
+    background: rgba(255,255,255,0.08) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    color: #94a3b8 !important;
+    padding: 10px 20px !important;
+    font-size: 13px !important;
+  }
+  .btn-secondary:hover {
+    background: rgba(255,255,255,0.14) !important;
+    box-shadow: 0 0 16px rgba(148, 163, 184, 0.15) !important;
+  }
+
+  /* 排行榜弹窗 */
+  .leaderboard-overlay {
+    position: absolute;
+    inset: 24px;
+    border-radius: 12px;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 7;
+    padding: 20px;
+  }
+  .leaderboard-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .lb-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+  }
+  .lb-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fbbf24;
+    letter-spacing: 1px;
+  }
+  .lb-close {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #888;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .lb-close:hover {
+    background: rgba(248, 113, 113, 0.2);
+    color: #f87171;
+  }
+  .lb-table-wrap {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  .lb-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .lb-table thead th {
+    color: #666;
+    font-weight: 600;
+    padding: 8px 6px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    letter-spacing: 1px;
+    font-size: 11px;
+    position: sticky;
+    top: 0;
+    background: rgba(0,0,0,0.85);
+  }
+  .lb-table tbody td {
+    padding: 8px 6px;
+    text-align: center;
+    color: #cbd5e1;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .lb-table tbody tr {
+    transition: background 0.15s;
+  }
+  .lb-table tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+  }
+  .lb-col-rank { width: 40px; }
+  .lb-col-name { width: auto; text-align: left !important; }
+  .lb-col-time { width: 80px; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; }
+  .lb-col-deaths { width: 50px; color: #666 !important; font-size: 12px; }
+  .lb-table tbody tr.rank-1 td { color: #fbbf24; font-weight: 700; }
+  .lb-table tbody tr.rank-2 td { color: #94a3b8; font-weight: 600; }
+  .lb-table tbody tr.rank-3 td { color: #d49b5f; font-weight: 600; }
+  .lb-empty {
+    text-align: center;
+    color: #555;
+    padding: 40px 0;
+    font-size: 14px;
+  }
+  #victoryDeaths { color: #f87171; }
 
   /* 颜色选择器 */
   .color-picker {
@@ -404,115 +555,6 @@
     font-size: 16px;
     color: #94a3b8;
   }
-
-  /* ═══════════════════════════════════════════
-     移动端响应式布局
-     ═══════════════════════════════════════════ */
-  @media (max-width: 680px) {
-    .game-wrapper {
-      padding: 10px;
-      border-radius: 14px;
-    }
-
-    .header {
-      flex-wrap: wrap;
-      gap: 2px 8px;
-      margin-bottom: 6px;
-    }
-    .title {
-      font-size: 18px;
-      order: 1;
-      flex: 1 1 auto;
-    }
-    .mode-toggle {
-      order: 2;
-      flex: 0 0 auto;
-    }
-    .scores {
-      order: 3;
-      flex: 0 0 100%;
-      justify-content: center;
-      gap: 12px;
-    }
-    .score-value {
-      font-size: 16px;
-    }
-    .score-label {
-      font-size: 9px;
-    }
-
-    .color-picker {
-      margin-bottom: 6px;
-      gap: 3px;
-    }
-    .color-dot {
-      width: 18px;
-      height: 18px;
-    }
-
-    .level-bar {
-      margin-bottom: 4px;
-      gap: 4px;
-    }
-    .level-badge { font-size: 10px; }
-    .level-name  { font-size: 9px; }
-
-    canvas {
-      max-width: 100%;
-      height: auto;
-    }
-
-    /* 隐藏键盘提示，显示触摸提示 */
-    .controls {
-      display: none !important;
-    }
-    .touch-hint {
-      display: flex !important;
-      margin-top: 6px;
-      gap: 10px;
-      font-size: 10px;
-    }
-
-    /* D-pad 缩小 + 底部安全距离 */
-    .dpad-wrap {
-      display: flex !important;
-      margin-top: 8px;
-      padding-bottom: env(safe-area-inset-bottom, 4px);
-    }
-    .dpad {
-      grid-template-columns: repeat(3, 50px);
-      grid-template-rows: repeat(3, 50px);
-      gap: 3px;
-    }
-    .dpad-btn {
-      width: 50px;
-      height: 50px;
-      border-radius: 12px;
-      font-size: 20px;
-    }
-    .dpad-center {
-      font-size: 10px;
-    }
-
-    .overlay,
-    .level-overlay {
-      inset: 10px;
-      border-radius: 8px;
-    }
-    .overlay-title {
-      font-size: 22px;
-    }
-    .level-overlay-title {
-      font-size: 20px;
-    }
-    .btn {
-      padding: 12px 26px;
-      font-size: 14px;
-    }
-    .pause-indicator {
-      font-size: 32px;
-    }
-  }
 </style>
 </head>
 <body>
@@ -527,6 +569,7 @@
       <button class="mode-btn active" data-mode="classic">经典</button>
       <button class="mode-btn" data-mode="level">闯关</button>
     </div>
+    <button class="leaderboard-btn" id="leaderboardBtn" title="排行榜">🏆</button>
     <div class="scores">
       <div class="score-item">
         <div class="score-label">得分</div>
@@ -569,6 +612,49 @@
       <button class="btn" id="lvlNextBtn">▶ 下一关</button>
     </div>
     <div class="pause-indicator" id="pauseIndicator">⏸ 暂停</div>
+    <div class="victory-overlay" id="victoryOverlay">
+      <div class="victory-title">🏆 全部通关！</div>
+      <div class="victory-stats">
+        <div class="victory-stat">
+          <span class="victory-stat-label">⏱ 总用时</span>
+          <span class="victory-stat-value" id="victoryTime">0秒</span>
+        </div>
+        <div class="victory-stat">
+          <span class="victory-stat-label">💀 死亡次数</span>
+          <span class="victory-stat-value" id="victoryDeaths">0</span>
+        </div>
+      </div>
+      <div class="victory-input-wrap">
+        <label class="victory-label">留下你的昵称 ✍️</label>
+        <input type="text" class="victory-input" id="victoryNickname" maxlength="12" placeholder="输入昵称（最多12字）" autocomplete="off">
+      </div>
+      <div class="victory-btns">
+        <button class="btn" id="victorySubmitBtn">📋 提交记录</button>
+        <button class="btn btn-secondary" id="victoryLeaderboardBtn">🏆 查看排行榜</button>
+        <button class="btn btn-secondary" id="victoryRetryBtn">🔄 重新挑战</button>
+      </div>
+    </div>
+    <div class="leaderboard-overlay" id="leaderboardOverlay">
+      <div class="lb-header">
+        <span class="lb-title">🏆 通关排行榜</span>
+        <button class="lb-close" id="lbCloseBtn">✕</button>
+      </div>
+      <div class="lb-table-wrap">
+        <table class="lb-table" id="lbTable">
+          <thead>
+            <tr>
+              <th class="lb-col-rank">#</th>
+              <th class="lb-col-name">昵称</th>
+              <th class="lb-col-time">用时</th>
+              <th class="lb-col-deaths">死亡</th>
+            </tr>
+          </thead>
+          <tbody id="lbTbody">
+          </tbody>
+        </table>
+        <div class="lb-empty" id="lbEmpty">暂无通关记录，快来挑战吧！</div>
+      </div>
+    </div>
   </div>
 
   <div class="controls">
@@ -576,24 +662,6 @@
     <span class="key-hint"><span class="key-badge">W A S D</span> 移动</span>
     <span class="key-hint"><span class="key-badge">Space</span> 暂停</span>
     <span class="key-hint"><span class="key-badge">R</span> 重新开始</span>
-  </div>
-
-  <!-- 触摸提示 (移动端显示) -->
-  <div class="touch-hint">
-    <span class="key-hint"><span class="key-badge">👆</span> 滑动转向</span>
-    <span class="key-hint"><span class="key-badge">⬆⬇⬅➡</span> 方向键</span>
-    <span class="key-hint"><span class="key-badge">⏯</span> 点按暂停</span>
-  </div>
-
-  <!-- 虚拟方向键 (移动端显示) -->
-  <div class="dpad-wrap">
-    <div class="dpad" id="dpad">
-      <button class="dpad-btn dpad-up"    data-dir="up"   >▲</button>
-      <button class="dpad-btn dpad-left"  data-dir="left" >◀</button>
-      <button class="dpad-btn dpad-center">Snake</button>
-      <button class="dpad-btn dpad-right" data-dir="right">▶</button>
-      <button class="dpad-btn dpad-down"  data-dir="down" >▼</button>
-    </div>
   </div>
 </div>
 
@@ -622,9 +690,20 @@
   const lvlOverlaySub   = document.getElementById('lvlOverlaySub');
   const lvlNextBtn      = document.getElementById('lvlNextBtn');
   const modeBtns     = document.querySelectorAll('.mode-btn');
-  const gameWrapper  = document.getElementById('gameWrapper');
-  const dpad         = document.getElementById('dpad');
-  const dpadBtns     = document.querySelectorAll('.dpad-btn[data-dir]');
+
+  // 通关 & 排行榜 DOM
+  const victoryOverlay     = document.getElementById('victoryOverlay');
+  const victoryTime        = document.getElementById('victoryTime');
+  const victoryDeaths      = document.getElementById('victoryDeaths');
+  const victoryNickname    = document.getElementById('victoryNickname');
+  const victorySubmitBtn   = document.getElementById('victorySubmitBtn');
+  const victoryLeaderboardBtn = document.getElementById('victoryLeaderboardBtn');
+  const victoryRetryBtn    = document.getElementById('victoryRetryBtn');
+  const leaderboardOverlay = document.getElementById('leaderboardOverlay');
+  const lbTbody            = document.getElementById('lbTbody');
+  const lbEmpty            = document.getElementById('lbEmpty');
+  const lbCloseBtn         = document.getElementById('lbCloseBtn');
+  const leaderboardBtn     = document.getElementById('leaderboardBtn');
 
   // ── 常量 ─────────────────────────────────────────
   const CELL   = 24;          // 每格像素
@@ -635,51 +714,6 @@
 
   canvas.width  = WIDTH;
   canvas.height = HEIGHT;
-
-  // ── Canvas 自适应缩放 ────────────────────────────
-  function applyCanvasSize() {
-    var vw = window.innerWidth;
-    var vh = window.innerHeight;
-    var usedH = 0;
-
-    // 估算非 canvas 元素占用的高度
-    var headerEl = document.querySelector('.header');
-    var cpEl     = document.getElementById('colorPicker');
-    var lbEl     = document.getElementById('levelBar');
-    var ctrlEl   = document.querySelector('.controls');
-    var thEl     = document.querySelector('.touch-hint');
-    var dWrap    = document.querySelector('.dpad-wrap');
-
-    if (headerEl) usedH += headerEl.offsetHeight;
-    if (cpEl)     usedH += cpEl.offsetHeight;
-    if (lbEl && lbEl.classList.contains('visible')) usedH += lbEl.offsetHeight;
-
-    var ctrlStyle = ctrlEl ? window.getComputedStyle(ctrlEl) : null;
-    if (ctrlStyle && ctrlStyle.display !== 'none') usedH += ctrlEl.offsetHeight + 8;
-
-    var thStyle = thEl ? window.getComputedStyle(thEl) : null;
-    if (thStyle && thStyle.display !== 'none') usedH += thEl.offsetHeight + 6;
-
-    var dStyle = dWrap ? window.getComputedStyle(dWrap) : null;
-    if (dStyle && dStyle.display !== 'none') usedH += dWrap.offsetHeight + 8;
-
-    // wrapper padding + 安全边距
-    usedH += 32;
-
-    // 可用宽度
-    var availW = Math.min(vw - 24, 576);
-    var availH = vh - usedH;
-    var size = Math.min(availW, availH, 576);
-    size = Math.max(size, 180);
-
-    canvas.style.width  = size + 'px';
-    canvas.style.height = size + 'px';
-  }
-
-  window.addEventListener('resize', applyCanvasSize);
-  window.addEventListener('orientationchange', function() {
-    setTimeout(applyCanvasSize, 100);
-  });
 
   // ── 游戏状态 ─────────────────────────────────────
   let snake    = [];
@@ -700,6 +734,8 @@
   let growing  = false;
   let growCount = 0;
   let frameCount = 0;
+  let gameTime   = 0;        // 闯关模式累计游戏时长（毫秒）
+  let deathCount = 0;        // 闯关模式死亡次数
 
   // 从 localStorage 读取最高分
   try {
@@ -989,6 +1025,7 @@
 
     // 关卡模式：重开按钮文字改为"重试本关"
     if (gameMode === 'level') {
+      deathCount++;
       restartBtn.textContent = '🔄 重试本关';
     } else {
       restartBtn.textContent = '🔄 再来一局';
@@ -997,6 +1034,22 @@
 
   // ── 输入处理 ─────────────────────────────────────
   document.addEventListener('keydown', e => {
+    // 排行榜弹窗显示时优先处理（层级最高）
+    if (leaderboardOverlay.classList.contains('active')) {
+      if (e.key === 'Escape') {
+        hideLeaderboard();
+      }
+      return;
+    }
+
+    // 胜利弹窗显示时忽略大部分输入
+    if (victoryOverlay.classList.contains('active')) {
+      if (e.key === 'Enter') {
+        victorySubmitBtn.click();
+      }
+      return;
+    }
+
     // 关卡过渡中忽略输入
     if (levelTransition && levelOverlay.classList.contains('active')) {
       if (e.key === 'Enter') {
@@ -1058,88 +1111,6 @@
     reset();
   });
 
-  // ── 触摸滑动控制 ─────────────────────────────────
-  let touchStartX = 0, touchStartY = 0;
-  const SWIPE_MIN = 25;
-
-  canvas.addEventListener('touchstart', function(e) {
-    e.preventDefault();
-    if (e.touches.length === 1) {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }
-  }, { passive: false });
-
-  canvas.addEventListener('touchmove', function(e) {
-    e.preventDefault();
-  }, { passive: false });
-
-  canvas.addEventListener('touchend', function(e) {
-    e.preventDefault();
-    if (gameOver) {
-      // 游戏结束：轻触重新开始
-      if (gameMode === 'level') {
-        score = levelStartScore;
-        scoreEl.textContent = score;
-      }
-      reset();
-      return;
-    }
-    if (paused) return;
-    if (levelTransition && levelOverlay.classList.contains('active')) return;
-    if (countdownRemaining > 0) return;
-
-    var touch = e.changedTouches[0];
-    if (!touch) return;
-
-    var dx = touch.clientX - touchStartX;
-    var dy = touch.clientY - touchStartY;
-
-    if (Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN) return;
-
-    if (Math.abs(dx) > Math.abs(dy)) {
-      // 水平滑动
-      if (dx > 0 && dir.x !== -1) { nextDir = { x: 1, y: 0 }; }
-      else if (dx < 0 && dir.x !== 1) { nextDir = { x: -1, y: 0 }; }
-    } else {
-      // 垂直滑动
-      if (dy > 0 && dir.y !== -1) { nextDir = { x: 0, y: 1 }; }
-      else if (dy < 0 && dir.y !== 1) { nextDir = { x: 0, y: -1 }; }
-    }
-  }, { passive: false });
-
-  // 禁止长按菜单
-  canvas.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
-  // ── 虚拟方向键控制 ───────────────────────────────
-  dpadBtns.forEach(function(btn) {
-    function handleDir(e) {
-      e.preventDefault();
-      if (gameOver) {
-        if (gameMode === 'level') {
-          score = levelStartScore;
-          scoreEl.textContent = score;
-        }
-        reset();
-        return;
-      }
-      if (paused || levelTransition || countdownRemaining > 0) return;
-
-      var d = btn.getAttribute('data-dir');
-      if (d === 'up'    && dir.y !== 1)  { nextDir = { x: 0, y: -1 }; }
-      if (d === 'down'  && dir.y !== -1) { nextDir = { x: 0, y:  1 }; }
-      if (d === 'left'  && dir.x !== 1)  { nextDir = { x: -1, y: 0 }; }
-      if (d === 'right' && dir.x !== -1) { nextDir = { x: 1, y: 0 }; }
-    }
-    btn.addEventListener('touchstart', handleDir, { passive: false });
-    btn.addEventListener('mousedown', handleDir);
-  });
-
-  // ── 阻止游戏区域默认触摸行为 ─────────────────────
-  gameWrapper.addEventListener('touchmove', function(e) {
-    e.preventDefault();
-  }, { passive: false });
-
   // ── 更新逻辑 ─────────────────────────────────────
   function update(dt) {
     if (gameOver || paused) return;
@@ -1152,6 +1123,11 @@
       updateParticles();
       if (food) food.pulse = (food.pulse + 0.08) % (Math.PI * 2);
       return;
+    }
+
+    // 闯关模式累加游戏时间
+    if (gameMode === 'level') {
+      gameTime += dt;
     }
 
     tickAcc += dt;
@@ -1638,18 +1614,11 @@
         try { localStorage.setItem('snake-high-score', highScore); } catch(e) {}
         bestEl.textContent = highScore;
       }
-      lvlOverlayTitle.textContent = '🏆 全部通关！';
-      lvlOverlayTitle.style.color = '#fbbf24';
-      lvlOverlaySub.textContent = '总得分: ' + score;
-      lvlNextBtn.textContent = '🔄 重新挑战';
-      lvlNextBtn.onclick = () => {
-        score = 0;
-        levelStartScore = 0;
-        currentLevel = 1;
-        scoreEl.textContent = '0';
-        reset();
-      };
-      levelOverlay.classList.add('active');
+      // 显示胜利弹窗
+      victoryTime.textContent = formatDuration(gameTime);
+      victoryDeaths.textContent = deathCount;
+      victoryNickname.value = '';
+      victoryOverlay.classList.add('active');
     } else {
       lvlOverlayTitle.textContent = '🎉 第 ' + currentLevel + ' 关通过！';
       lvlOverlayTitle.style.color = '#4ade80';
@@ -1672,10 +1641,14 @@
       currentLevel = 1;
       score = 0;
       levelStartScore = 0;
+      gameTime = 0;
+      deathCount = 0;
       obstacles = LEVELS[0].obstacles;
       speed = LEVELS[0].speed;
       levelTransition = false;
       levelOverlay.classList.remove('active');
+      victoryOverlay.classList.remove('active');
+      leaderboardOverlay.classList.remove('active');
       overlay.classList.remove('active');
       updateLevelUI();
       reset();
@@ -1684,10 +1657,14 @@
       currentLevel = 1;
       score = 0;
       levelStartScore = 0;
+      gameTime = 0;
+      deathCount = 0;
       obstacles = [];
       speed = 130;
       levelTransition = false;
       levelOverlay.classList.remove('active');
+      victoryOverlay.classList.remove('active');
+      leaderboardOverlay.classList.remove('active');
       overlay.classList.remove('active');
       reset();
     }
@@ -1743,12 +1720,133 @@
     applyTheme(currentTheme);
   }
 
+  // ── 工具函数：时长格式化 ──────────────────────────
+  function formatDuration(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSec / 3600);
+    const minutes = Math.floor((totalSec % 3600) / 60);
+    const seconds = totalSec % 60;
+    if (hours > 0) return hours + '时' + minutes + '分' + seconds + '秒';
+    if (minutes > 0) return minutes + '分' + seconds + '秒';
+    return seconds + '秒';
+  }
+
+  // ── 排行榜数据管理 ────────────────────────────────
+  function getLeaderboard() {
+    try {
+      return JSON.parse(localStorage.getItem('snake-leaderboard') || '[]');
+    } catch(e) {
+      return [];
+    }
+  }
+
+  function saveToLeaderboard(nickname, duration, deaths) {
+    const data = getLeaderboard();
+    data.push({
+      nickname: nickname,
+      duration: duration,
+      deaths: deaths,
+      date: new Date().toISOString()
+    });
+    // 按时长升序排列
+    data.sort((a, b) => a.duration - b.duration);
+    try {
+      localStorage.setItem('snake-leaderboard', JSON.stringify(data));
+    } catch(e) {}
+    return data;
+  }
+
+  function renderLeaderboard() {
+    const data = getLeaderboard();
+    lbTbody.innerHTML = '';
+
+    if (data.length === 0) {
+      lbEmpty.style.display = 'block';
+      return;
+    }
+    lbEmpty.style.display = 'none';
+
+    data.forEach((entry, i) => {
+      const rank = i + 1;
+      const tr = document.createElement('tr');
+      let rankClass = '';
+      if (rank === 1) rankClass = 'rank-1';
+      else if (rank === 2) rankClass = 'rank-2';
+      else if (rank === 3) rankClass = 'rank-3';
+      if (rankClass) tr.className = rankClass;
+
+      // 格式化日期为简短形式
+      let dateStr = '';
+      try {
+        const d = new Date(entry.date);
+        const m = d.getMonth() + 1;
+        const day = d.getDate();
+        dateStr = m + '/' + day;
+      } catch(e) { dateStr = '-'; }
+
+      tr.innerHTML =
+        '<td class="lb-col-rank">' + rank + '</td>' +
+        '<td class="lb-col-name">' + escapeHtml(entry.nickname) + ' <span style="font-size:10px;color:#555">' + dateStr + '</span></td>' +
+        '<td class="lb-col-time">' + formatDuration(entry.duration) + '</td>' +
+        '<td class="lb-col-deaths">' + entry.deaths + '</td>';
+      lbTbody.appendChild(tr);
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function showLeaderboard() {
+    renderLeaderboard();
+    leaderboardOverlay.classList.add('active');
+  }
+
+  function hideLeaderboard() {
+    leaderboardOverlay.classList.remove('active');
+  }
+
+  // ── 胜利弹窗事件 ──────────────────────────────────
+  victorySubmitBtn.addEventListener('click', () => {
+    let nickname = victoryNickname.value.trim();
+    if (!nickname) nickname = '匿名玩家';
+    saveToLeaderboard(nickname, gameTime, deathCount);
+    victorySubmitBtn.textContent = '✅ 已提交';
+    victorySubmitBtn.disabled = true;
+    setTimeout(() => {
+      victorySubmitBtn.textContent = '📋 提交记录';
+      victorySubmitBtn.disabled = false;
+    }, 2000);
+  });
+
+  victoryLeaderboardBtn.addEventListener('click', () => {
+    showLeaderboard();
+  });
+
+  victoryRetryBtn.addEventListener('click', () => {
+    victoryOverlay.classList.remove('active');
+    leaderboardOverlay.classList.remove('active');
+    score = 0;
+    levelStartScore = 0;
+    gameTime = 0;
+    deathCount = 0;
+    currentLevel = 1;
+    scoreEl.textContent = '0';
+    reset();
+  });
+
+  // ── 排行榜弹窗事件 ────────────────────────────────
+  lbCloseBtn.addEventListener('click', hideLeaderboard);
+  leaderboardBtn.addEventListener('click', showLeaderboard);
+
+  // 排行榜弹窗也支持 Enter 关闭（如果未在输入框中）
   // ── 启动 ─────────────────────────────────────────
   function init() {
     createBgParticles();
     buildColorPicker();
     bestEl.textContent = highScore;
-    applyCanvasSize();
     reset();
     lastTime = 0;
     requestAnimationFrame(gameLoop);
