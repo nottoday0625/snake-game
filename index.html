@@ -526,6 +526,22 @@
     text-align: right;
   }
 
+  /* 用时 & 死亡实时显示 */
+  .level-stat {
+    font-size: 12px;
+    color: #94a3b8;
+    white-space: nowrap;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    border-left: 1px solid rgba(255,255,255,0.06);
+    padding-left: 10px;
+  }
+  .level-stat #liveTime {
+    color: #22d3ee;
+  }
+  .level-stat #liveDeaths {
+    color: #f87171;
+  }
+
   /* 过关 / 胜利遮罩 */
   .level-overlay {
     position: absolute;
@@ -597,6 +613,8 @@
       <div class="progress-fill" id="progressFill"></div>
     </div>
     <span class="progress-text" id="progressText">0 / 50</span>
+    <span class="level-stat">⏱ <span id="liveTime">0秒</span></span>
+    <span class="level-stat">💀 <span id="liveDeaths">0</span></span>
   </div>
 
   <div style="position:relative;">
@@ -704,6 +722,8 @@
   const lbEmpty            = document.getElementById('lbEmpty');
   const lbCloseBtn         = document.getElementById('lbCloseBtn');
   const leaderboardBtn     = document.getElementById('leaderboardBtn');
+  const liveTimeEl         = document.getElementById('liveTime');
+  const liveDeathsEl       = document.getElementById('liveDeaths');
 
   // ── 常量 ─────────────────────────────────────────
   const CELL   = 24;          // 每格像素
@@ -1486,6 +1506,7 @@
   }
 
   function render() {
+    updateLiveStats();
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
     drawGrid();
@@ -1564,6 +1585,13 @@
     levelNameEl.textContent = lvl.name;
     progressFill.style.width = pct + '%';
     progressText.textContent = earned + ' / ' + lvl.target;
+  }
+
+  function updateLiveStats() {
+    if (gameMode === 'level') {
+      liveTimeEl.textContent = formatDuration(gameTime);
+      liveDeathsEl.textContent = deathCount;
+    }
   }
 
   function startLevel(n) {
