@@ -2,20 +2,37 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>🐍 贪吃蛇</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  html {
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
   body {
+    width: 100%;
+    min-height: 100%;
+    min-height: 100dvh;
     background: #0a0a1a;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
     font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
     overflow: hidden;
-    user-select: none;
+    overscroll-behavior: none;
   }
 
   /* 背景粒子 */
@@ -37,48 +54,63 @@
     position: relative;
     background: linear-gradient(135deg, #111133 0%, #0d0d28 50%, #111133 100%);
     border-radius: 24px;
-    padding: 24px;
+    padding: 20px;
     box-shadow:
       0 0 60px rgba(80, 120, 255, 0.15),
       0 0 120px rgba(80, 120, 255, 0.05),
       inset 0 1px 0 rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.06);
+    max-width: 100vw;
+    max-height: 100dvh;
+    display: flex;
+    flex-direction: column;
   }
 
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     padding: 0 4px;
+    flex-shrink: 0;
+    gap: 8px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
   }
 
   .title {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 700;
     background: linear-gradient(135deg, #4ade80, #22d3ee);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: 2px;
+    white-space: nowrap;
   }
 
   .scores {
     display: flex;
-    gap: 24px;
+    gap: 16px;
+    flex-shrink: 0;
   }
   .score-item {
     text-align: center;
   }
   .score-label {
-    font-size: 11px;
+    font-size: 10px;
     color: #666;
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
   }
   .score-value {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 700;
     color: #e2e8f0;
     font-variant-numeric: tabular-nums;
@@ -88,27 +120,37 @@
     color: #fbbf24;
   }
 
+  .canvas-container {
+    position: relative;
+    flex-shrink: 0;
+    touch-action: none;
+  }
+
   canvas {
     display: block;
+    margin: 0 auto;
     border-radius: 12px;
     background: #0a0a1f;
     box-shadow:
       inset 0 0 40px rgba(0,0,0,0.5),
       0 0 0 1px rgba(255,255,255,0.04);
+    touch-action: none;
   }
 
+  /* ═══════════════ 键盘提示 & 虚拟 D-Pad ═══════════════ */
   .controls {
     display: flex;
     justify-content: center;
     gap: 8px;
-    margin-top: 16px;
+    margin-top: 10px;
     flex-wrap: wrap;
+    flex-shrink: 0;
   }
   .key-hint {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
+    font-size: 11px;
     color: #555;
   }
   .key-badge {
@@ -117,40 +159,129 @@
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 6px;
     padding: 3px 8px;
-    font-size: 11px;
+    font-size: 10px;
     color: #888;
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
     min-width: 24px;
     text-align: center;
   }
 
+  .dpad {
+    display: none;
+    flex-shrink: 0;
+    margin-top: 10px;
+  }
+  .dpad-rows {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .dpad-row {
+    display: flex;
+    gap: 4px;
+  }
+  .dpad-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #888;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.1s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+  }
+  .dpad-btn:active,
+  .dpad-btn.pressed {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.25);
+    color: #e2e8f0;
+    transform: scale(0.92);
+    box-shadow: 0 0 16px rgba(100,200,255,0.2);
+  }
+  .dpad-center {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    color: #555;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .dpad-side-btns {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 24px;
+  }
+  .dpad-action {
+    width: 44px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    color: #555;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.1s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: 1px;
+  }
+  .dpad-action:active {
+    background: rgba(255,255,255,0.1);
+    color: #999;
+    transform: scale(0.93);
+  }
+
+  /* ── JS 触屏检测驱动的显示切换 ── */
+  .touch-device .controls { display: none; }
+  .touch-device .dpad     { display: block; }
+  .touch-device .swipe-hint { display: block; }
+
   /* 游戏结束遮罩 */
   .overlay {
     position: absolute;
-    inset: 24px;
+    inset: 0;
     border-radius: 12px;
     background: rgba(0,0,0,0.75);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.4s;
+    z-index: 4;
   }
   .overlay.active {
     opacity: 1;
     pointer-events: auto;
   }
   .overlay-title {
-    font-size: 36px;
+    font-size: 32px;
     font-weight: 700;
     color: #f87171;
     letter-spacing: 2px;
   }
   .overlay-score {
-    font-size: 18px;
+    font-size: 16px;
     color: #94a3b8;
   }
   .overlay-score span {
@@ -161,13 +292,14 @@
     background: linear-gradient(135deg, #4ade80, #22d3ee);
     border: none;
     border-radius: 12px;
-    padding: 12px 36px;
-    font-size: 16px;
+    padding: 12px 32px;
+    font-size: 15px;
     font-weight: 600;
     color: #0a0a1a;
     cursor: pointer;
     letter-spacing: 1px;
     transition: transform 0.15s, box-shadow 0.15s;
+    touch-action: manipulation;
   }
   .btn:hover {
     transform: scale(1.05);
@@ -189,6 +321,7 @@
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.2s;
+    z-index: 3;
   }
   .pause-indicator.visible {
     opacity: 1;
@@ -199,9 +332,9 @@
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 10px;
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -209,6 +342,8 @@
     transition: all 0.2s;
     padding: 0;
     line-height: 1;
+    flex-shrink: 0;
+    touch-action: manipulation;
   }
   .leaderboard-btn:hover {
     background: rgba(255,255,255,0.12);
@@ -219,14 +354,14 @@
   /* 通关胜利弹窗 */
   .victory-overlay {
     position: absolute;
-    inset: 24px;
+    inset: 0;
     border-radius: 12px;
     background: rgba(0,0,0,0.8);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.4s;
@@ -237,28 +372,28 @@
     pointer-events: auto;
   }
   .victory-title {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
     color: #fbbf24;
     letter-spacing: 2px;
   }
   .victory-stats {
     display: flex;
-    gap: 32px;
+    gap: 28px;
   }
   .victory-stat {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
   }
   .victory-stat-label {
-    font-size: 12px;
+    font-size: 11px;
     color: #94a3b8;
     letter-spacing: 1px;
   }
   .victory-stat-value {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     color: #e2e8f0;
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
@@ -270,7 +405,7 @@
     gap: 6px;
   }
   .victory-label {
-    font-size: 13px;
+    font-size: 12px;
     color: #94a3b8;
   }
   .victory-input {
@@ -295,7 +430,7 @@
   }
   .victory-btns {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
     justify-content: center;
   }
@@ -303,7 +438,7 @@
     background: rgba(255,255,255,0.08) !important;
     border: 1px solid rgba(255,255,255,0.12) !important;
     color: #94a3b8 !important;
-    padding: 10px 20px !important;
+    padding: 10px 18px !important;
     font-size: 13px !important;
   }
   .btn-secondary:hover {
@@ -314,16 +449,16 @@
   /* 排行榜弹窗 */
   .leaderboard-overlay {
     position: absolute;
-    inset: 24px;
+    inset: 0;
     border-radius: 12px;
-    background: rgba(0,0,0,0.85);
+    background: rgba(0,0,0,0.88);
     display: flex;
     flex-direction: column;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.3s;
     z-index: 7;
-    padding: 20px;
+    padding: 18px;
   }
   .leaderboard-overlay.active {
     opacity: 1;
@@ -333,11 +468,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     flex-shrink: 0;
   }
   .lb-title {
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 700;
     color: #fbbf24;
     letter-spacing: 1px;
@@ -355,6 +490,7 @@
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
+    touch-action: manipulation;
   }
   .lb-close:hover {
     background: rgba(248, 113, 113, 0.2);
@@ -364,26 +500,27 @@
     flex: 1;
     overflow-y: auto;
     min-height: 0;
+    -webkit-overflow-scrolling: touch;
   }
   .lb-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: 12px;
   }
   .lb-table thead th {
     color: #666;
     font-weight: 600;
-    padding: 8px 6px;
+    padding: 7px 5px;
     text-align: center;
     border-bottom: 1px solid rgba(255,255,255,0.06);
     letter-spacing: 1px;
-    font-size: 11px;
+    font-size: 10px;
     position: sticky;
     top: 0;
-    background: rgba(0,0,0,0.85);
+    background: rgba(0,0,0,0.88);
   }
   .lb-table tbody td {
-    padding: 8px 6px;
+    padding: 7px 5px;
     text-align: center;
     color: #cbd5e1;
     border-bottom: 1px solid rgba(255,255,255,0.03);
@@ -394,106 +531,32 @@
   .lb-table tbody tr:hover {
     background: rgba(255,255,255,0.03);
   }
-  .lb-col-rank { width: 40px; }
+  .lb-col-rank { width: 36px; }
   .lb-col-name { width: auto; text-align: left !important; }
-  .lb-col-time { width: 80px; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; }
-  .lb-col-deaths { width: 50px; color: #666 !important; font-size: 12px; }
+  .lb-col-time { width: 72px; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; }
+  .lb-col-deaths { width: 44px; color: #666 !important; font-size: 11px; }
   .lb-table tbody tr.rank-1 td { color: #fbbf24; font-weight: 700; }
   .lb-table tbody tr.rank-2 td { color: #94a3b8; font-weight: 600; }
   .lb-table tbody tr.rank-3 td { color: #d49b5f; font-weight: 600; }
   .lb-empty {
     text-align: center;
     color: #555;
-    padding: 40px 0;
-    font-size: 14px;
+    padding: 32px 0;
+    font-size: 13px;
   }
   #victoryDeaths { color: #f87171; }
 
-  /* ── 移动端适配 ──────────────────────────────── */
-  @media (max-width: 500px) {
-    body {
-      overflow-y: auto;
-      overflow-x: hidden;
-      align-items: flex-start;
-      padding-top: 8px;
-    }
-    .game-wrapper {
-      padding: 12px;
-      border-radius: 16px;
-      margin: 0 auto;
-    }
-    .header {
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-      gap: 6px;
-      justify-content: center;
-    }
-    .title {
-      font-size: 20px;
-    }
-    .scores {
-      gap: 12px;
-    }
-    .score-value {
-      font-size: 18px;
-    }
-    .score-label {
-      font-size: 9px;
-    }
-    .mode-btn {
-      padding: 4px 10px;
-      font-size: 11px;
-    }
-    .leaderboard-btn {
-      width: 30px;
-      height: 30px;
-      font-size: 15px;
-    }
-    .color-picker {
-      margin-bottom: 8px;
-      gap: 4px;
-    }
-    .color-dot {
-      width: 18px;
-      height: 18px;
-    }
-    .level-bar {
-      margin-bottom: 6px;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .level-badge { font-size: 11px; }
-    .level-name { font-size: 10px; }
-    .level-stat { font-size: 10px; padding-left: 6px; }
-    .controls {
-      margin-top: 8px;
-      gap: 4px;
-    }
-    .key-hint { font-size: 10px; }
-    .key-badge { font-size: 9px; padding: 2px 5px; }
-    .btn {
-      padding: 8px 24px;
-      font-size: 14px;
-    }
-    .btn-secondary {
-      padding: 7px 14px !important;
-      font-size: 11px !important;
-    }
-    .overlay-title { font-size: 24px; }
-    .overlay-score { font-size: 14px; }
-    .victory-title { font-size: 22px; }
-    .victory-stats { gap: 16px; }
-    .victory-stat-value { font-size: 18px; }
-    .victory-stat-label { font-size: 10px; }
-    .victory-input { width: 180px; font-size: 14px; padding: 8px 12px; }
-    .victory-btns { gap: 6px; }
-    .lb-title { font-size: 16px; }
-    .lb-table { font-size: 11px; }
-    /* overlay 适配缩小的 padding */
-    .overlay { inset: 12px; }
-    .level-overlay { inset: 12px; }
-    .victory-overlay { inset: 12px; }
-    .leaderboard-overlay { inset: 12px; padding: 12px; }
+  /* 移动端滑动指示器 */
+  .swipe-hint {
+    display: none;
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: rgba(255,255,255,0.2);
+    pointer-events: none;
+    letter-spacing: 1px;
   }
 
   /* 颜色选择器 */
@@ -501,23 +564,25 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 14px;
+    gap: 5px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
   }
   .color-picker-label {
-    font-size: 11px;
+    font-size: 10px;
     color: #555;
     letter-spacing: 1px;
-    margin-right: 4px;
+    margin-right: 3px;
   }
   .color-dot {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid transparent;
     transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
     position: relative;
+    touch-action: manipulation;
   }
   .color-dot:hover {
     transform: scale(1.2);
@@ -535,7 +600,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: #fff;
     text-shadow: 0 0 4px rgba(0,0,0,0.6);
@@ -544,22 +609,25 @@
   /* 模式切换 */
   .mode-toggle {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     background: rgba(255,255,255,0.04);
     border-radius: 10px;
-    padding: 3px;
+    padding: 2px;
+    flex-shrink: 0;
   }
   .mode-btn {
-    padding: 5px 14px;
+    padding: 4px 12px;
     border-radius: 8px;
     border: none;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     cursor: pointer;
     color: #666;
     background: transparent;
     letter-spacing: 1px;
     transition: all 0.2s;
+    white-space: nowrap;
+    touch-action: manipulation;
   }
   .mode-btn.active {
     background: rgba(255,255,255,0.1);
@@ -574,26 +642,27 @@
   .level-bar {
     display: none;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 8px;
+    margin-bottom: 10px;
     padding: 0 4px;
+    flex-shrink: 0;
   }
   .level-bar.visible { display: flex; }
   .level-badge {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     color: #fbbf24;
     white-space: nowrap;
     letter-spacing: 1px;
   }
   .level-name {
-    font-size: 12px;
+    font-size: 11px;
     color: #94a3b8;
     white-space: nowrap;
   }
   .progress-wrap {
     flex: 1;
-    height: 6px;
+    height: 5px;
     background: rgba(255,255,255,0.05);
     border-radius: 3px;
     overflow: hidden;
@@ -606,40 +675,36 @@
     width: 0%;
   }
   .progress-text {
-    font-size: 10px;
+    font-size: 9px;
     color: #555;
     white-space: nowrap;
-    min-width: 50px;
+    min-width: 44px;
     text-align: right;
   }
 
   /* 用时 & 死亡实时显示 */
   .level-stat {
-    font-size: 12px;
+    font-size: 11px;
     color: #94a3b8;
     white-space: nowrap;
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
     border-left: 1px solid rgba(255,255,255,0.06);
-    padding-left: 10px;
+    padding-left: 8px;
   }
-  .level-stat #liveTime {
-    color: #22d3ee;
-  }
-  .level-stat #liveDeaths {
-    color: #f87171;
-  }
+  .level-stat #liveTime { color: #22d3ee; }
+  .level-stat #liveDeaths { color: #f87171; }
 
-  /* 过关 / 胜利遮罩 */
+  /* 过关遮罩 */
   .level-overlay {
     position: absolute;
-    inset: 24px;
+    inset: 0;
     border-radius: 12px;
     background: rgba(0,0,0,0.7);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.4s;
@@ -650,13 +715,105 @@
     pointer-events: auto;
   }
   .level-overlay-title {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
     letter-spacing: 2px;
   }
   .level-overlay-sub {
-    font-size: 16px;
+    font-size: 14px;
     color: #94a3b8;
+  }
+
+  /* ═══════════════ 响应式 — 小屏手机 (< 420px) ═══════════════ */
+  @media (max-width: 420px) {
+    .game-wrapper {
+      padding: 10px;
+      border-radius: 16px;
+    }
+    .header {
+      margin-bottom: 6px;
+      gap: 5px;
+    }
+    .header-left { gap: 5px; }
+    .title {
+      font-size: 18px;
+      letter-spacing: 1px;
+    }
+    .mode-toggle { gap: 2px; border-radius: 8px; padding: 2px; }
+    .mode-btn { padding: 3px 9px; font-size: 10px; border-radius: 6px; }
+    .leaderboard-btn { width: 28px; height: 28px; font-size: 14px; border-radius: 8px; }
+    .scores { gap: 10px; }
+    .score-value { font-size: 16px; }
+    .score-label { font-size: 8px; }
+
+    .color-picker { gap: 4px; margin-bottom: 6px; }
+    .color-dot { width: 18px; height: 18px; }
+    .color-picker-label { font-size: 9px; }
+
+    .level-bar { margin-bottom: 6px; gap: 5px; }
+    .level-badge { font-size: 10px; }
+    .level-name { font-size: 9px; display: none; }
+    .level-stat { font-size: 9px; padding-left: 5px; }
+    .progress-text { font-size: 8px; min-width: 38px; }
+
+    .btn { padding: 9px 22px; font-size: 13px; }
+    .btn-secondary { padding: 8px 14px !important; font-size: 11px !important; }
+
+    .overlay-title { font-size: 22px; }
+    .overlay-score { font-size: 13px; }
+    .overlay { gap: 10px; }
+
+    .victory-title { font-size: 20px; }
+    .victory-stats { gap: 16px; }
+    .victory-stat-value { font-size: 16px; }
+    .victory-stat-label { font-size: 9px; }
+    .victory-input { width: 170px; font-size: 14px; padding: 8px 12px; }
+    .victory-btns { gap: 6px; }
+    .victory-overlay { gap: 10px; }
+
+    .lb-title { font-size: 15px; }
+    .lb-table { font-size: 10px; }
+    .leaderboard-overlay { padding: 10px; }
+
+    .pause-indicator { font-size: 36px; }
+  }
+
+  /* ═══════════════ 响应式 — 中等手机 (421–600px) ═══════════════ */
+  @media (min-width: 421px) and (max-width: 600px) {
+    .game-wrapper { padding: 14px; border-radius: 18px; }
+    .title { font-size: 22px; }
+    .scores { gap: 14px; }
+    .score-value { font-size: 18px; }
+    .mode-btn { padding: 4px 11px; font-size: 11px; }
+    .leaderboard-btn { width: 30px; height: 30px; font-size: 15px; }
+    .btn { padding: 10px 26px; font-size: 14px; }
+    .overlay-title { font-size: 26px; }
+    .victory-title { font-size: 24px; }
+  }
+
+  /* ═══════════════ 横屏手机优化 ═══════════════ */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .game-wrapper {
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+    }
+    .header { width: 100%; margin-bottom: 4px; }
+    .color-picker { margin-bottom: 4px; }
+    .level-bar { width: 100%; margin-bottom: 4px; }
+    .canvas-container { order: 1; }
+    .dpad {
+      order: 2;
+      margin-top: 0;
+      margin-left: 8px;
+    }
+    .dpad-btn { width: 44px; height: 44px; border-radius: 10px; font-size: 20px; }
+    .dpad-center { width: 44px; height: 44px; border-radius: 10px; font-size: 14px; }
+    .dpad-action { width: 38px; height: 34px; font-size: 11px; }
+    .swipe-hint { display: none; }
   }
 </style>
 </head>
@@ -667,10 +824,12 @@
 
 <div class="game-wrapper" id="gameWrapper">
   <div class="header">
-    <div class="title">🐍 贪吃蛇</div>
-    <div class="mode-toggle" id="modeToggle">
-      <button class="mode-btn active" data-mode="classic">经典</button>
-      <button class="mode-btn" data-mode="level">闯关</button>
+    <div class="header-left">
+      <div class="title">🐍 贪吃蛇</div>
+      <div class="mode-toggle" id="modeToggle">
+        <button class="mode-btn active" data-mode="classic">经典</button>
+        <button class="mode-btn" data-mode="level">闯关</button>
+      </div>
     </div>
     <button class="leaderboard-btn" id="leaderboardBtn" title="排行榜">🏆</button>
     <div class="scores">
@@ -704,7 +863,7 @@
     <span class="level-stat">💀 <span id="liveDeaths">0</span></span>
   </div>
 
-  <div style="position:relative;">
+  <div class="canvas-container" id="canvasContainer">
     <canvas id="canvas"></canvas>
     <div class="overlay" id="overlay">
       <div class="overlay-title" id="overlayTitle">游戏结束</div>
@@ -731,7 +890,7 @@
       </div>
       <div class="victory-input-wrap">
         <label class="victory-label">留下你的昵称 ✍️</label>
-        <input type="text" class="victory-input" id="victoryNickname" maxlength="12" placeholder="输入昵称（最多12字）" autocomplete="off">
+        <input type="text" class="victory-input" id="victoryNickname" maxlength="12" placeholder="输入昵称（最多12字）" autocomplete="off" enterkeyhint="done">
       </div>
       <div class="victory-btns">
         <button class="btn" id="victorySubmitBtn">📋 提交记录</button>
@@ -754,24 +913,54 @@
               <th class="lb-col-deaths">死亡</th>
             </tr>
           </thead>
-          <tbody id="lbTbody">
-          </tbody>
+          <tbody id="lbTbody"></tbody>
         </table>
         <div class="lb-empty" id="lbEmpty">暂无通关记录，快来挑战吧！</div>
       </div>
     </div>
+    <div class="swipe-hint" id="swipeHint">↑ 滑动控制方向</div>
   </div>
 
-  <div class="controls">
+  <!-- 桌面端键盘提示 -->
+  <div class="controls" id="keyControls">
     <span class="key-hint"><span class="key-badge">↑↓←→</span> 或</span>
     <span class="key-hint"><span class="key-badge">W A S D</span> 移动</span>
     <span class="key-hint"><span class="key-badge">Space</span> 暂停</span>
     <span class="key-hint"><span class="key-badge">R</span> 重新开始</span>
   </div>
+
+  <!-- 移动端虚拟方向键 -->
+  <div class="dpad" id="dpad">
+    <div class="dpad-rows">
+      <div class="dpad-row">
+        <div class="dpad-btn" data-dir="up" id="dpadUp">▲</div>
+      </div>
+      <div class="dpad-row">
+        <div class="dpad-btn" data-dir="left" id="dpadLeft">◀</div>
+        <div class="dpad-center" id="dpadPause">⏯</div>
+        <div class="dpad-btn" data-dir="right" id="dpadRight">▶</div>
+      </div>
+      <div class="dpad-row">
+        <div class="dpad-btn" data-dir="down" id="dpadDown">▼</div>
+      </div>
+    </div>
+    <div class="dpad-side-btns">
+      <button class="dpad-action" id="dpadRestart">🔄</button>
+    </div>
+  </div>
 </div>
 
 <script>
 (function() {
+  // ── 触屏检测 & class 注入 ──────────────────────
+  const isTouchDevice = ('ontouchstart' in window) ||
+    (navigator.maxTouchPoints > 0) ||
+    (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+
+  if (isTouchDevice) {
+    document.body.classList.add('touch-device');
+  }
+
   // ── DOM ──────────────────────────────────────────
   const canvas   = document.getElementById('canvas');
   const ctx      = canvas.getContext('2d');
@@ -783,6 +972,7 @@
   const overlayScore = document.getElementById('overlayScore');
   const pauseInd   = document.getElementById('pauseIndicator');
   const restartBtn = document.getElementById('restartBtn');
+  const swipeHint = document.getElementById('swipeHint');
 
   // 关卡模式 DOM
   const levelBar     = document.getElementById('levelBar');
@@ -812,10 +1002,15 @@
   const liveTimeEl         = document.getElementById('liveTime');
   const liveDeathsEl       = document.getElementById('liveDeaths');
 
+  // D-pad DOM
+  const dpadBtns = document.querySelectorAll('.dpad-btn[data-dir]');
+  const dpadPause = document.getElementById('dpadPause');
+  const dpadRestart = document.getElementById('dpadRestart');
+
   // ── 常量 ─────────────────────────────────────────
-  let   CELL   = 24;          // 每格像素（响应式，会根据屏幕调整）
-  const COLS   = 24;          // 列数
-  const ROWS   = 24;          // 行数
+  let   CELL   = 24;
+  const COLS   = 24;
+  const ROWS   = 24;
   let   WIDTH  = COLS * CELL;
   let   HEIGHT = ROWS * CELL;
 
@@ -831,7 +1026,7 @@
   // ── 游戏状态 ─────────────────────────────────────
   let snake    = [];
   let food     = null;
-  let special  = null;       // 特殊食物（加分）
+  let special  = null;
   let specialTimer = 0;
   let dir      = { x: 1, y: 0 };
   let nextDir  = { x: 1, y: 0 };
@@ -839,18 +1034,16 @@
   let highScore = 0;
   let gameOver = false;
   let paused   = false;
-  let speed    = 130;        // ms/步 — 初始速度
+  let speed    = 130;
   let tickAcc  = 0;
   let lastTime = 0;
   let particles = [];
-  let trailPositions = [];   // 用于蛇身渐变
   let growing  = false;
   let growCount = 0;
   let frameCount = 0;
-  let gameTime   = 0;        // 闯关模式累计游戏时长（毫秒）
-  let deathCount = 0;        // 闯关模式死亡次数
+  let gameTime   = 0;
+  let deathCount = 0;
 
-  // 从 localStorage 读取最高分
   try {
     const saved = localStorage.getItem('snake-high-score');
     if (saved) highScore = parseInt(saved, 10) || 0;
@@ -867,9 +1060,8 @@
     { name: 'cyan',   label: '冰青', head: [34, 211, 238], tail: [15, 110, 130],   glow: [34, 211, 238]  },
     { name: 'red',    label: '赤红', head: [248, 113, 113],tail: [150, 40, 40],    glow: [248, 113, 113] },
   ];
-  let currentTheme = THEMES[0]; // 默认绿色
+  let currentTheme = THEMES[0];
 
-  // 从 localStorage 读取颜色主题
   try {
     const savedTheme = localStorage.getItem('snake-color-theme');
     if (savedTheme) {
@@ -879,12 +1071,12 @@
   } catch(e) {}
 
   // ── 闯关模式状态 ─────────────────────────────────
-  let gameMode     = 'classic';  // 'classic' | 'level'
+  let gameMode     = 'classic';
   let currentLevel = 1;
-  let levelStartScore = 0;       // 进入当前关时的累积分数
+  let levelStartScore = 0;
   let obstacles    = [];
-  let levelTransition = false;   // 过关动画中
-  let countdownRemaining = 0;    // 倒计时剩余毫秒，0=不在倒计时
+  let levelTransition = false;
+  let countdownRemaining = 0;
 
   // ── 障碍物生成工具 ───────────────────────────────
   function hLine(x, y, len) {
@@ -904,7 +1096,6 @@
         pts.push({x: x + dx, y: y + dy});
     return pts;
   }
-  // 去重
   function dedupe(pts) {
     const seen = new Set();
     return pts.filter(p => {
@@ -915,85 +1106,69 @@
     });
   }
 
-  // ── 关卡定义（障碍物 + 目标分数 + 速度）──────────
-  // 蛇出生点：中心 (12,12), (11,12), (10,12)，避开此区域
+  // ── 关卡定义 ─────────────────────────────────────
   const LEVELS = [
-    { // 第 1 关
+    {
       name: '初入蛇穴', target: 50, speed: 130,
       obstacles: dedupe([].concat(
-        vLine(18, 4, 16),                // 右侧竖墙
-        hLine(3, 8, 6),                   // 左上短横
-        hLine(15, 8, 5),                  // 右上短横
-        hLine(3, 16, 6),                  // 左下短横
-        hLine(15, 16, 5),                 // 右下短横
+        vLine(18, 4, 16),
+        hLine(3, 8, 6), hLine(15, 8, 5),
+        hLine(3, 16, 6), hLine(15, 16, 5),
       ))
     },
-    { // 第 2 关
+    {
       name: '曲折前进', target: 120, speed: 115,
       obstacles: dedupe([].concat(
-        // 四角 L 形
         vLine(3, 3, 7), hLine(3, 3, 7),
         vLine(20, 3, 7), hLine(14, 3, 7),
         vLine(3, 14, 7), hLine(3, 17, 7),
         vLine(20, 14, 7), hLine(14, 17, 7),
-        // 中间分散方块
         rectObs(10, 7, 4, 1), rectObs(10, 16, 4, 1),
         rectObs(7, 11, 1, 2), rectObs(16, 11, 1, 2),
       ))
     },
-    { // 第 3 关
+    {
       name: '迷宫探险', target: 210, speed: 100,
       obstacles: dedupe([].concat(
-        // 上下横墙
         hLine(3, 3, 9), hLine(12, 3, 9),
         hLine(3, 20, 9), hLine(12, 20, 9),
-        // 左右竖墙
         vLine(3, 5, 6), vLine(3, 13, 6),
         vLine(20, 5, 6), vLine(20, 13, 6),
-        // 中央回廊
         hLine(8, 10, 8), hLine(8, 13, 8),
         vLine(10, 10, 4),
-        // 四个角落小方块
         rectObs(0, 0, 3, 1), rectObs(21, 0, 3, 1),
         rectObs(0, 23, 3, 1), rectObs(21, 23, 3, 1),
       ))
     },
-    { // 第 4 关
+    {
       name: '步步惊心', target: 320, speed: 85,
       obstacles: dedupe([].concat(
-        // 外圈边框片段（不是完整边框）
         hLine(2, 2, 8), hLine(14, 2, 8),
         hLine(2, 21, 8), hLine(14, 21, 8),
         vLine(2, 4, 6), vLine(2, 14, 6),
         vLine(21, 4, 6), vLine(21, 14, 6),
-        // 内部密集区
         hLine(5, 8, 5), hLine(14, 8, 5),
         hLine(5, 15, 5), hLine(14, 15, 5),
         vLine(8, 5, 5), vLine(8, 14, 5),
         vLine(15, 5, 5), vLine(15, 14, 5),
-        // 中心小环
         rectObs(10, 11, 4, 2),
         rectObs(9, 9, 1, 6), rectObs(14, 9, 1, 6),
       ))
     },
-    { // 第 5 关
+    {
       name: '终极挑战', target: 450, speed: 70,
       obstacles: dedupe([].concat(
-        // 全屏锯齿边框
         hLine(1, 1, 7), hLine(9, 1, 6), hLine(16, 1, 7),
         hLine(1, 22, 7), hLine(9, 22, 6), hLine(16, 22, 7),
         vLine(1, 3, 6), vLine(1, 10, 4), vLine(1, 15, 6),
         vLine(22, 3, 6), vLine(22, 10, 4), vLine(22, 15, 6),
-        // 内部迷宫
         hLine(4, 5, 4), hLine(16, 5, 4),
         hLine(4, 18, 4), hLine(16, 18, 4),
         vLine(5, 7, 4), vLine(5, 13, 4),
         vLine(18, 7, 4), vLine(18, 13, 4),
-        // 中心多重障碍
         hLine(7, 11, 3), hLine(14, 11, 3),
         rectObs(10, 7, 4, 2), rectObs(10, 15, 4, 2),
         rectObs(8, 10, 2, 4), rectObs(14, 10, 2, 4),
-        // 角落封堵
         rectObs(2, 2, 4, 2), rectObs(18, 2, 4, 2),
         rectObs(2, 20, 4, 2), rectObs(18, 20, 4, 2),
       ))
@@ -1006,10 +1181,7 @@
   }
 
   function gridPos() {
-    return {
-      x: randInt(0, COLS - 1),
-      y: randInt(0, ROWS - 1)
-    };
+    return { x: randInt(0, COLS - 1), y: randInt(0, ROWS - 1) };
   }
 
   function occupies(pos) {
@@ -1027,19 +1199,19 @@
   function spawnSpecial() {
     let pos;
     do { pos = gridPos(); } while (occupies(pos) || (food && pos.x === food.x && pos.y === food.y));
-    return { ...pos, life: 80 }; // 80 帧 ≈ 5秒 (60fps ≈ 1.3s, 但游戏帧率低)
+    return { ...pos, life: 80 };
   }
 
   // ── 粒子系统 ─────────────────────────────────────
   function emitParticles(x, y, color, count) {
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
-      const speed = 1.5 + Math.random() * 3;
+      const spd = 1.5 + Math.random() * 3;
       particles.push({
         x: x * CELL + CELL / 2,
         y: y * CELL + CELL / 2,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
         life: 1,
         decay: 0.02 + Math.random() * 0.04,
         color: color,
@@ -1136,7 +1308,6 @@
     overlayScore.textContent = score;
     overlay.classList.add('active');
 
-    // 关卡模式：重开按钮文字改为"重试本关"
     if (gameMode === 'level') {
       deathCount++;
       restartBtn.textContent = '🔄 重试本关';
@@ -1145,29 +1316,29 @@
     }
   }
 
-  // ── 输入处理 ─────────────────────────────────────
+  // ── 方向变更（统一入口）─────────────────────────
+  function changeDir(dx, dy) {
+    if (dx === 0 && dy === -1 && dir.y !== 1) { nextDir = { x: 0, y: -1 }; return true; }
+    if (dx === 0 && dy === 1  && dir.y !== -1) { nextDir = { x: 0, y: 1 };  return true; }
+    if (dx === -1 && dy === 0 && dir.x !== 1)  { nextDir = { x: -1, y: 0 }; return true; }
+    if (dx === 1  && dy === 0 && dir.x !== -1) { nextDir = { x: 1, y: 0 };  return true; }
+    return false;
+  }
+
+  // ── 键盘输入 ─────────────────────────────────────
   document.addEventListener('keydown', e => {
-    // 排行榜弹窗显示时优先处理（层级最高）
     if (leaderboardOverlay.classList.contains('active')) {
-      if (e.key === 'Escape') {
-        hideLeaderboard();
-      }
+      if (e.key === 'Escape') { hideLeaderboard(); }
       return;
     }
 
-    // 胜利弹窗显示时忽略大部分输入
     if (victoryOverlay.classList.contains('active')) {
-      if (e.key === 'Enter') {
-        victorySubmitBtn.click();
-      }
+      if (e.key === 'Enter') { victorySubmitBtn.click(); }
       return;
     }
 
-    // 关卡过渡中忽略输入
     if (levelTransition && levelOverlay.classList.contains('active')) {
-      if (e.key === 'Enter') {
-        lvlNextBtn.click();
-      }
+      if (e.key === 'Enter') { lvlNextBtn.click(); }
       return;
     }
 
@@ -1183,22 +1354,10 @@
     }
 
     switch (e.key) {
-      case 'ArrowUp':    case 'w': case 'W':
-        if (dir.y !== 1) nextDir = { x: 0, y: -1 };
-        e.preventDefault();
-        break;
-      case 'ArrowDown':  case 's': case 'S':
-        if (dir.y !== -1) nextDir = { x: 0, y: 1 };
-        e.preventDefault();
-        break;
-      case 'ArrowLeft':  case 'a': case 'A':
-        if (dir.x !== 1) nextDir = { x: -1, y: 0 };
-        e.preventDefault();
-        break;
-      case 'ArrowRight': case 'd': case 'D':
-        if (dir.x !== -1) nextDir = { x: 1, y: 0 };
-        e.preventDefault();
-        break;
+      case 'ArrowUp':    case 'w': case 'W': changeDir(0, -1); e.preventDefault(); break;
+      case 'ArrowDown':  case 's': case 'S': changeDir(0, 1);  e.preventDefault(); break;
+      case 'ArrowLeft':  case 'a': case 'A': changeDir(-1, 0); e.preventDefault(); break;
+      case 'ArrowRight': case 'd': case 'D': changeDir(1, 0);  e.preventDefault(); break;
       case ' ':
         paused = !paused;
         pauseInd.classList.toggle('visible', paused);
@@ -1217,28 +1376,135 @@
 
   restartBtn.addEventListener('click', () => {
     if (gameMode === 'level') {
-      // 关卡模式：重置到当前关卡的初始分数
       score = levelStartScore;
       scoreEl.textContent = score;
     }
     reset();
   });
 
+  // ── Canvas 触摸滑动 ──────────────────────────────
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartTime = 0;
+  let touchMoved = false;
+
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.touches.length === 1) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+      touchMoved = false;
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.touches.length !== 1) return;
+    if (gameOver || paused || countdownRemaining > 0 || levelTransition) return;
+
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    if (absDx > 16 || absDy > 16) {
+      touchMoved = true;
+      if (absDx > absDy) {
+        changeDir(dx > 0 ? 1 : -1, 0);
+      } else {
+        changeDir(0, dy > 0 ? 1 : -1);
+      }
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const elapsed = Date.now() - touchStartTime;
+    if (!touchMoved && elapsed < 200) {
+      if (!gameOver && !levelTransition) {
+        paused = !paused;
+        pauseInd.classList.toggle('visible', paused);
+      }
+    }
+    touchMoved = false;
+  });
+
+  // ── 虚拟方向键 (D-pad) ───────────────────────────
+  function addDpadListeners() {
+    dpadBtns.forEach(btn => {
+      const dir = btn.dataset.dir;
+      const dirMap = {
+        up:    { x: 0, y: -1 },
+        down:  { x: 0, y: 1 },
+        left:  { x: -1, y: 0 },
+        right: { x: 1, y: 0 },
+      };
+      const d = dirMap[dir];
+
+      btn.addEventListener('pointerdown', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        btn.classList.add('pressed');
+        if (!gameOver && !paused && countdownRemaining <= 0 && !levelTransition) {
+          changeDir(d.x, d.y);
+        }
+      });
+
+      btn.addEventListener('pointerup', function(e) {
+        e.preventDefault();
+        btn.classList.remove('pressed');
+      });
+
+      btn.addEventListener('pointerleave', function(e) {
+        btn.classList.remove('pressed');
+      });
+
+      btn.addEventListener('pointercancel', function(e) {
+        btn.classList.remove('pressed');
+      });
+    });
+
+    dpadPause.addEventListener('pointerdown', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!gameOver && !levelTransition) {
+        paused = !paused;
+        pauseInd.classList.toggle('visible', paused);
+      }
+    });
+
+    dpadRestart.addEventListener('pointerdown', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (gameMode === 'level') {
+        score = levelStartScore;
+        scoreEl.textContent = score;
+      }
+      reset();
+    });
+  }
+
+  addDpadListeners();
+
   // ── 更新逻辑 ─────────────────────────────────────
   function update(dt) {
     if (gameOver || paused) return;
 
-    // 倒计时中：更新计时器但不移动蛇
     if (countdownRemaining > 0) {
       countdownRemaining -= dt;
       if (countdownRemaining < 0) countdownRemaining = 0;
-      tickAcc = 0; // 防止倒计时结束后瞬间跳帧
+      tickAcc = 0;
       updateParticles();
       if (food) food.pulse = (food.pulse + 0.08) % (Math.PI * 2);
       return;
     }
 
-    // 闯关模式累加游戏时间
     if (gameMode === 'level') {
       gameTime += dt;
     }
@@ -1249,18 +1515,15 @@
       step();
     }
 
-    // 更新粒子
     updateParticles();
 
-    // 更新食物脉冲动画
     if (food) food.pulse = (food.pulse + 0.08) % (Math.PI * 2);
 
-    // 特殊食物计时
     if (special) {
       special.life--;
       if (special.life <= 0) {
         special = null;
-        specialTimer = 200; // 冷却 (游戏步数)
+        specialTimer = 200;
       }
     }
     if (!special && specialTimer > 0) {
@@ -1270,56 +1533,46 @@
       }
     }
     if (!special && specialTimer === 0) {
-      specialTimer = 1; // 触发一次尝试
+      specialTimer = 1;
     }
 
     frameCount++;
   }
 
   function step() {
-    // 应用方向
     dir = { ...nextDir };
 
-    // 新头部
     const head = {
       x: snake[0].x + dir.x,
       y: snake[0].y + dir.y
     };
 
-    // 边界回绕 — 穿墙从另一侧出现
     if (head.x < 0) head.x = COLS - 1;
     if (head.x >= COLS) head.x = 0;
     if (head.y < 0) head.y = ROWS - 1;
     if (head.y >= ROWS) head.y = 0;
 
-    // 撞障碍物检测
     if (obstacles.some(o => o.x === head.x && o.y === head.y)) {
       emitParticles(head.x, head.y, '#ef4444', 20);
       die();
       return;
     }
 
-    // 撞自己检测
     if (snake.some((s, i) => i < snake.length - 1 && s.x === head.x && s.y === head.y)) {
       emitParticles(head.x, head.y, '#f87171', 20);
       die();
       return;
     }
 
-    // 插入头部
     snake.unshift(head);
 
-    // 吃普通食物
-    let ate = false;
     if (food && head.x === food.x && head.y === food.y) {
-      ate = true;
       score += 10;
       growing = true;
       growCount += 1;
       emitParticles(food.x, food.y, `rgb(${currentTheme.glow.join(',')})`, 12);
       food = spawnFood();
 
-      // 加速（经典模式）
       if (gameMode === 'classic' && speed > 60) {
         speed = Math.max(60, speed - 2);
       }
@@ -1327,7 +1580,6 @@
       scoreEl.textContent = score;
       lengthEl.textContent = snake.length;
 
-      // 关卡模式：检查是否过关
       if (gameMode === 'level') {
         updateLevelUI();
         const lvl = LEVELS[currentLevel - 1];
@@ -1338,7 +1590,6 @@
       }
     }
 
-    // 吃特殊食物
     if (special && head.x === special.x && head.y === special.y) {
       score += 30;
       growing = true;
@@ -1350,7 +1601,6 @@
       scoreEl.textContent = score;
       lengthEl.textContent = snake.length;
 
-      // 关卡模式：检查是否过关
       if (gameMode === 'level') {
         updateLevelUI();
         const lvl = LEVELS[currentLevel - 1];
@@ -1361,14 +1611,9 @@
       }
     }
 
-    // 尾部处理
     if (growing) {
-      if (growCount > 0) {
-        growCount--;
-      }
-      if (growCount === 0) {
-        growing = false;
-      }
+      if (growCount > 0) { growCount--; }
+      if (growCount === 0) { growing = false; }
     } else {
       snake.pop();
     }
@@ -1400,24 +1645,21 @@
     const fy = food.y * CELL + CELL / 2;
     const pulse = 1 + Math.sin(food.pulse) * 0.15;
 
-    // 光晕
     const glow = ctx.createRadialGradient(fx, fy, CELL * 0.15, fx, fy, CELL * 0.65 * pulse);
     glow.addColorStop(0, 'rgba(248, 113, 113, 0.35)');
     glow.addColorStop(1, 'rgba(248, 113, 113, 0)');
     ctx.fillStyle = glow;
     ctx.fillRect(fx - CELL*0.7, fy - CELL*0.7, CELL*1.4, CELL*1.4);
 
-    // 食物本体 — 小苹果形状
     const r = CELL * 0.35 * pulse;
     ctx.fillStyle = '#f87171';
     ctx.shadowColor = '#f87171';
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = Math.max(6, CELL * 0.4);
     ctx.beginPath();
     ctx.arc(fx, fy, r, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // 高光
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.beginPath();
     ctx.arc(fx - r*0.3, fy - r*0.3, r*0.35, 0, Math.PI * 2);
@@ -1433,20 +1675,18 @@
     ctx.save();
     ctx.globalAlpha = alpha;
 
-    // 光晕
     const glow = ctx.createRadialGradient(sx, sy, CELL * 0.1, sx, sy, CELL * 0.7);
     glow.addColorStop(0, 'rgba(251, 191, 36, 0.4)');
     glow.addColorStop(1, 'rgba(251, 191, 36, 0)');
     ctx.fillStyle = glow;
     ctx.fillRect(sx - CELL*0.7, sy - CELL*0.7, CELL*1.4, CELL*1.4);
 
-    // 星星形状
     const spikes = 5;
     const outerR = CELL * 0.4;
     const innerR = CELL * 0.18;
     ctx.fillStyle = '#fbbf24';
     ctx.shadowColor = '#fbbf24';
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = Math.max(8, CELL * 0.5);
     ctx.beginPath();
     for (let i = 0; i < spikes * 2; i++) {
       const r = i % 2 === 0 ? outerR : innerR;
@@ -1469,14 +1709,12 @@
     const [hr, hg, hb] = currentTheme.head;
     const [tr, tg, tb] = currentTheme.tail;
 
-    // 身体渐变 — 从头部亮色到尾部暗色
     for (let i = snake.length - 1; i >= 0; i--) {
       const s = snake[i];
-      const t = i / Math.max(snake.length - 1, 1); // 0=头, 1=尾
+      const t = i / Math.max(snake.length - 1, 1);
       const cx = s.x * CELL;
       const cy = s.y * CELL;
 
-      // 颜色插值
       const r = Math.floor(hr + t * (tr - hr));
       const g = Math.floor(hg + t * (tg - hg));
       const b = Math.floor(hb + t * (tb - hb));
@@ -1484,14 +1722,12 @@
 
       ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
 
-      // 圆角矩形
-      const pad = i === 0 ? 1 : 2;
-      const radius = i === 0 ? 7 : 5;
+      const pad = i === 0 ? 1 : (CELL > 16 ? 2 : 1);
+      const radius = i === 0 ? Math.min(7, CELL * 0.3) : Math.min(5, CELL * 0.22);
       roundRect(cx + pad, cy + pad, CELL - pad * 2, CELL - pad * 2, radius);
       ctx.fill();
     }
 
-    // 头部光晕
     const head = snake[0];
     const hx = head.x * CELL + CELL / 2;
     const hy = head.y * CELL + CELL / 2;
@@ -1502,33 +1738,32 @@
     ctx.fillStyle = hGlow;
     ctx.fillRect(hx - CELL, hy - CELL, CELL * 2, CELL * 2);
 
-    // 眼睛
     drawEyes(head);
   }
 
   function drawEyes(head) {
     const cx = head.x * CELL + CELL / 2;
     const cy = head.y * CELL + CELL / 2;
-    const eyeR = 3;
+    const scale = CELL / 24;
+    const eyeR = 3 * scale;
+    const pupilR = 1.8 * scale;
+    const offset = 5 * scale;
 
-    // 根据方向调整眼睛位置
     let e1x, e1y, e2x, e2y;
-    const offset = 5;
-    if (dir.x === 1) {       // 右
-      e1x = cx + offset; e1y = cy - 4;
-      e2x = cx + offset; e2y = cy + 4;
-    } else if (dir.x === -1) { // 左
-      e1x = cx - offset; e1y = cy - 4;
-      e2x = cx - offset; e2y = cy + 4;
-    } else if (dir.y === -1) { // 上
-      e1x = cx - 4; e1y = cy - offset;
-      e2x = cx + 4; e2y = cy - offset;
-    } else {                   // 下
-      e1x = cx - 4; e1y = cy + offset;
-      e2x = cx + 4; e2y = cy + offset;
+    if (dir.x === 1) {
+      e1x = cx + offset; e1y = cy - 4 * scale;
+      e2x = cx + offset; e2y = cy + 4 * scale;
+    } else if (dir.x === -1) {
+      e1x = cx - offset; e1y = cy - 4 * scale;
+      e2x = cx - offset; e2y = cy + 4 * scale;
+    } else if (dir.y === -1) {
+      e1x = cx - 4 * scale; e1y = cy - offset;
+      e2x = cx + 4 * scale; e2y = cy - offset;
+    } else {
+      e1x = cx - 4 * scale; e1y = cy + offset;
+      e2x = cx + 4 * scale; e2y = cy + offset;
     }
 
-    // 白色眼球
     ctx.fillStyle = '#fff';
     ctx.beginPath();
     ctx.arc(e1x, e1y, eyeR, 0, Math.PI * 2);
@@ -1537,13 +1772,12 @@
     ctx.arc(e2x, e2y, eyeR, 0, Math.PI * 2);
     ctx.fill();
 
-    // 黑色瞳孔
     ctx.fillStyle = '#111';
     ctx.beginPath();
-    ctx.arc(e1x + dir.x * 1.2, e1y + dir.y * 1.2, 1.8, 0, Math.PI * 2);
+    ctx.arc(e1x + dir.x * 1.2 * scale, e1y + dir.y * 1.2 * scale, pupilR, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(e2x + dir.x * 1.2, e2y + dir.y * 1.2, 1.8, 0, Math.PI * 2);
+    ctx.arc(e2x + dir.x * 1.2 * scale, e2y + dir.y * 1.2 * scale, pupilR, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -1551,18 +1785,16 @@
     for (const o of obstacles) {
       const ox = o.x * CELL;
       const oy = o.y * CELL;
-      const m = 1; // margin
+      const m = Math.max(1, CELL * 0.04);
 
-      // 石块主体
       const grad = ctx.createLinearGradient(ox, oy, ox, oy + CELL);
       grad.addColorStop(0, '#3d3d5c');
       grad.addColorStop(0.5, '#2a2a40');
       grad.addColorStop(1, '#1a1a30');
       ctx.fillStyle = grad;
-      roundRect(ox + m, oy + m, CELL - m * 2, CELL - m * 2, 3);
+      roundRect(ox + m, oy + m, CELL - m * 2, CELL - m * 2, Math.min(3, CELL * 0.12));
       ctx.fill();
 
-      // 顶部高光边
       ctx.strokeStyle = 'rgba(255,255,255,0.06)';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -1570,13 +1802,14 @@
       ctx.lineTo(ox + CELL - m - 3, oy + m);
       ctx.stroke();
 
-      // 内部纹理裂痕
-      ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(ox + 5, oy + 7);
-      ctx.lineTo(ox + 10, oy + 14);
-      ctx.stroke();
+      if (CELL >= 16) {
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(ox + 5, oy + 7);
+        ctx.lineTo(ox + 10, oy + 14);
+        ctx.stroke();
+      }
     }
   }
 
@@ -1609,11 +1842,10 @@
     drawSnake();
     drawParticlesOnCanvas();
 
-    // 倒计时显示
     if (countdownRemaining > 0 && gameMode === 'level') {
       const sec = Math.ceil(countdownRemaining / 1000);
-      const alpha = (countdownRemaining % 1000) / 1000; // 渐隐
-      const scale = 1 + (1 - alpha) * 0.3; // 从 1.0 放大到 1.3
+      const alpha = (countdownRemaining % 1000) / 1000;
+      const scale = 1 + (1 - alpha) * 0.3;
 
       ctx.save();
       ctx.globalAlpha = 0.6 * (alpha * 0.5 + 0.5);
@@ -1622,7 +1854,8 @@
 
       ctx.globalAlpha = Math.min(1, alpha + 0.3);
       ctx.fillStyle = '#fbbf24';
-      ctx.font = `bold ${Math.floor(72 * scale)}px "Microsoft YaHei", sans-serif`;
+      const fontSize = Math.floor(72 * scale * (CELL / 24));
+      ctx.font = `bold ${fontSize}px "Microsoft YaHei", sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.shadowColor = '#fbbf24';
@@ -1631,7 +1864,6 @@
       ctx.restore();
     }
 
-    // 游戏结束时的红色闪烁
     if (gameOver) {
       ctx.fillStyle = 'rgba(248, 113, 113, 0.06)';
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -1644,7 +1876,6 @@
     let dt = timestamp - lastTime;
     lastTime = timestamp;
 
-    // 防止 tab 切换后的大帧跳跃
     if (dt > 500) dt = 500;
 
     update(dt);
@@ -1653,10 +1884,11 @@
     requestAnimationFrame(gameLoop);
   }
 
-  // ── 创建背景粒子 ─────────────────────────────────
+  // ── 背景粒子 ────────────────────────────────────
   function createBgParticles() {
     const container = document.getElementById('bg-particles');
-    for (let i = 0; i < 30; i++) {
+    const count = isTouchDevice ? 10 : 30;
+    for (let i = 0; i < count; i++) {
       const particle = document.createElement('div');
       particle.className = 'bg-particle';
       const size = 2 + Math.random() * 4;
@@ -1697,7 +1929,7 @@
     levelOverlay.classList.remove('active');
     updateLevelUI();
     resetSnakeOnly();
-    countdownRemaining = 3000; // 3 秒倒计时
+    countdownRemaining = 3000;
   }
 
   function resetSnakeOnly() {
@@ -1729,17 +1961,16 @@
     paused = true;
     countdownRemaining = 0;
     if (currentLevel >= LEVELS.length) {
-      // 全部通关！
       if (score > highScore) {
         highScore = score;
         try { localStorage.setItem('snake-high-score', highScore); } catch(e) {}
         bestEl.textContent = highScore;
       }
-      // 显示胜利弹窗
       victoryTime.textContent = formatDuration(gameTime);
       victoryDeaths.textContent = deathCount;
       victoryNickname.value = '';
       victoryOverlay.classList.add('active');
+      setTimeout(() => { victoryNickname.focus(); }, 400);
     } else {
       lvlOverlayTitle.textContent = '🎉 第 ' + currentLevel + ' 关通过！';
       lvlOverlayTitle.style.color = '#4ade80';
@@ -1791,7 +2022,6 @@
     }
   }
 
-  // 模式切换按钮
   modeBtns.forEach(btn => {
     btn.addEventListener('click', () => switchMode(btn.dataset.mode));
   });
@@ -1802,26 +2032,21 @@
     const [hr, hg, hb] = theme.head;
     const [glowR, glowG, glowB] = theme.glow;
 
-    // 更新标题渐变色
     const titleEl = document.querySelector('.title');
     titleEl.style.background = `linear-gradient(135deg, rgb(${hr},${hg},${hb}), rgb(${glowR},${glowG},${glowB}))`;
     titleEl.style.webkitBackgroundClip = 'text';
     titleEl.style.backgroundClip = 'text';
 
-    // 更新长度指示器颜色
     lengthEl.style.color = `rgb(${hr},${hg},${hb})`;
 
-    // 更新按钮渐变
     const btn = document.getElementById('restartBtn');
     btn.style.background = `linear-gradient(135deg, rgb(${hr},${hg},${hb}), rgb(${glowR},${glowG},${glowB}))`;
 
-    // 更新颜色选择器激活状态
     document.querySelectorAll('.color-dot').forEach(dot => {
       const isActive = dot.dataset.theme === theme.name;
       dot.classList.toggle('active', isActive);
     });
 
-    // 持久化
     try { localStorage.setItem('snake-color-theme', theme.name); } catch(e) {}
   }
 
@@ -1837,11 +2062,10 @@
       dot.addEventListener('click', () => applyTheme(theme));
       container.appendChild(dot);
     });
-    // 初始激活状态
     applyTheme(currentTheme);
   }
 
-  // ── 工具函数：时长格式化 ──────────────────────────
+  // ── 时长格式化 ───────────────────────────────────
   function formatDuration(ms) {
     const totalSec = Math.floor(ms / 1000);
     const hours = Math.floor(totalSec / 3600);
@@ -1856,9 +2080,7 @@
   function getLeaderboard() {
     try {
       return JSON.parse(localStorage.getItem('snake-leaderboard') || '[]');
-    } catch(e) {
-      return [];
-    }
+    } catch(e) { return []; }
   }
 
   function saveToLeaderboard(nickname, duration, deaths) {
@@ -1869,11 +2091,8 @@
       deaths: deaths,
       date: new Date().toISOString()
     });
-    // 按时长升序排列
     data.sort((a, b) => a.duration - b.duration);
-    try {
-      localStorage.setItem('snake-leaderboard', JSON.stringify(data));
-    } catch(e) {}
+    try { localStorage.setItem('snake-leaderboard', JSON.stringify(data)); } catch(e) {}
     return data;
   }
 
@@ -1896,18 +2115,15 @@
       else if (rank === 3) rankClass = 'rank-3';
       if (rankClass) tr.className = rankClass;
 
-      // 格式化日期为简短形式
       let dateStr = '';
       try {
         const d = new Date(entry.date);
-        const m = d.getMonth() + 1;
-        const day = d.getDate();
-        dateStr = m + '/' + day;
+        dateStr = (d.getMonth()+1) + '/' + d.getDate();
       } catch(e) { dateStr = '-'; }
 
       tr.innerHTML =
         '<td class="lb-col-rank">' + rank + '</td>' +
-        '<td class="lb-col-name">' + escapeHtml(entry.nickname) + ' <span style="font-size:10px;color:#555">' + dateStr + '</span></td>' +
+        '<td class="lb-col-name">' + escapeHtml(entry.nickname) + ' <span style="font-size:9px;color:#555">' + dateStr + '</span></td>' +
         '<td class="lb-col-time">' + formatDuration(entry.duration) + '</td>' +
         '<td class="lb-col-deaths">' + entry.deaths + '</td>';
       lbTbody.appendChild(tr);
@@ -1962,17 +2178,36 @@
   lbCloseBtn.addEventListener('click', hideLeaderboard);
   leaderboardBtn.addEventListener('click', showLeaderboard);
 
-  // 排行榜弹窗也支持 Enter 关闭（如果未在输入框中）
   // ── 屏幕自适应 ──────────────────────────────────
   function fitToScreen() {
-    const isMobile = window.innerWidth < 500;
-    // 估算水平方向非画布空间：wrapper padding + 边距
-    const padH = isMobile ? 36 : 64;
-    // 估算垂直方向非画布空间：header+controls+padding+其他
-    const padV = isMobile ? 210 : 250;
+    const wrapper = document.getElementById('gameWrapper');
+    const header = document.querySelector('.header');
+    const colorPicker = document.getElementById('colorPicker');
+    const levelBarEl = document.getElementById('levelBar');
+    const keyControls = document.getElementById('keyControls');
+    const dpadEl = document.getElementById('dpad');
 
-    const availW = window.innerWidth - padH;
-    const availH = window.innerHeight - padV;
+    const wrapperStyle = getComputedStyle(wrapper);
+    const wrapperPadH = parseFloat(wrapperStyle.paddingLeft) + parseFloat(wrapperStyle.paddingRight);
+    const availW = wrapper.clientWidth - wrapperPadH;
+
+    let usedV = 0;
+    usedV += header.offsetHeight;
+    usedV += colorPicker.offsetHeight;
+    if (levelBarEl.classList.contains('visible')) {
+      usedV += levelBarEl.offsetHeight;
+    }
+    if (isTouchDevice) {
+      if (dpadEl.offsetHeight > 0) usedV += dpadEl.offsetHeight;
+    } else {
+      if (keyControls.offsetHeight > 0) usedV += keyControls.offsetHeight;
+    }
+    usedV += wrapperPadH;
+    const wrapperBorderV = parseFloat(wrapperStyle.borderTopWidth || 0) + parseFloat(wrapperStyle.borderBottomWidth || 0);
+    usedV += wrapperBorderV;
+    usedV += isTouchDevice ? 12 : 20;
+
+    const availH = window.innerHeight - usedV;
 
     const maxCell = 24;
     const minCell = 8;
@@ -1992,10 +2227,22 @@
   let resizeTimeout;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      fitToScreen();
-    }, 200);
+    resizeTimeout = setTimeout(fitToScreen, 150);
   });
+
+  window.addEventListener('orientationchange', () => {
+    setTimeout(fitToScreen, 300);
+  });
+
+  // ── 全局滚动防护 ────────────────────────────────
+  document.addEventListener('touchmove', function(e) {
+    if (e.target.closest('.lb-table-wrap')) return;
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('dblclick', function(e) {
+    e.preventDefault();
+  }, { passive: false });
 
   // ── 启动 ─────────────────────────────────────────
   function init() {
