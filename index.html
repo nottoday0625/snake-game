@@ -1285,6 +1285,24 @@
     }
   }
 
+  // ── 闯关进度保存/读取 ───────────────────────────
+  function saveLevelProgress() {
+    try {
+      const data = JSON.stringify({ level: currentLevel, time: gameTime, deaths: deathCount });
+      localStorage.setItem('snake-level-progress', data);
+    } catch(e) {}
+  }
+  function loadLevelProgress() {
+    try {
+      const raw = localStorage.getItem('snake-level-progress');
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data && typeof data.level === 'number') return data;
+      }
+    } catch(e) {}
+    return null;
+  }
+
   function die() {
     gameOver = true;
     if (score > highScore) {
@@ -1300,6 +1318,7 @@
 
     if (gameMode === 'level') {
       deathCount++;
+      saveLevelProgress();
       restartBtn.textContent = '🔄 重试本关';
     } else {
       restartBtn.textContent = '🔄 再来一局';
@@ -1952,7 +1971,8 @@
     countdownRemaining = 0;
     if (currentLevel >= LEVELS.length) {
       // 五关全过 → 重置到第一关
-      try { localStorage.setItem('snake-level-progress', '1'); } catch(e) {}
+      gameTime = 0; deathCount = 0;
+      saveLevelProgress();
       if (score > highScore) {
         highScore = score;
         try { localStorage.setItem('snake-high-score', highScore); } catch(e) {}
@@ -1971,7 +1991,8 @@
       lvlNextBtn.onclick = () => {
         scoreEl.textContent = score;
         const nextLevel = currentLevel + 1;
-        try { localStorage.setItem('snake-level-progress', String(nextLevel)); } catch(e) {}
+        currentLevel = nextLevel;
+        saveLevelProgress();
         startLevel(nextLevel);
       };
       levelOverlay.classList.add('active');
@@ -1985,14 +2006,14 @@
     if (mode === 'level') {
       levelBar.classList.add('visible');
       // 读取保存的闯关进度（五关全过则从第1关开始）
-      let savedLevel = 1;
-      try { savedLevel = parseInt(localStorage.getItem('snake-level-progress'), 10) || 1; } catch(e) {}
+      const saved = loadLevelProgress();
+      let savedLevel = saved ? saved.level : 1;
       if (savedLevel > LEVELS.length) savedLevel = 1;
       currentLevel = savedLevel;
       score = 0;
       levelStartScore = 0;
-      gameTime = 0;
-      deathCount = 0;
+      gameTime = (saved && saved.time) ? saved.time : 0;
+      deathCount = (saved && saved.deaths != null) ? saved.deaths : 0;
       obstacles = LEVELS[0].obstacles;
       speed = LEVELS[0].speed;
       levelTransition = false;
@@ -2168,7 +2189,7 @@
     gameTime = 0;
     deathCount = 0;
     currentLevel = 1;
-    try { localStorage.setItem('snake-level-progress', '1'); } catch(e) {}
+    saveLevelProgress();
     scoreEl.textContent = '0';
     reset();
   });
@@ -2242,6 +2263,13 @@
   document.addEventListener('dblclick', function(e) {
     e.preventDefault();
   }, { passive: false });
+
+  // ── 页面关闭/刷新时自动保存闯关进度 ──────────────
+  window.addEventListener('beforeunload', () => {
+    if (gameMode === 'level' && !gameOver) {
+      saveLevelProgress();
+    }
+  });
 
   // ── 启动 ─────────────────────────────────────────
   function init() {
