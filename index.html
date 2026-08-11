@@ -2100,31 +2100,42 @@
     return seconds + '秒';
   }
 
-  // ── 排行榜数据管理 ────────────────────────────────
-  function getLeaderboard() {
+  // ── 排行榜数据管理（云端 D1） ──────────────────────
+  const API_BASE = '/api/leaderboard';
+
+  async function fetchLeaderboard() {
     try {
-      return JSON.parse(localStorage.getItem('snake-leaderboard') || '[]');
-    } catch(e) { return []; }
+      const res = await fetch(API_BASE);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return await res.json();
+    } catch(e) {
+      console.error('获取排行榜失败:', e);
+      return [];
+    }
   }
 
-  function saveToLeaderboard(nickname, duration, deaths) {
-    const data = getLeaderboard();
-    data.push({
-      nickname: nickname,
-      duration: duration,
-      deaths: deaths,
-      date: new Date().toISOString()
-    });
-    data.sort((a, b) => a.duration - b.duration);
-    try { localStorage.setItem('snake-leaderboard', JSON.stringify(data)); } catch(e) {}
-    return data;
+  async function saveToLeaderboard(nickname, duration, deaths) {
+    try {
+      const res = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname, duration, deaths })
+      });
+      return res.ok;
+    } catch(e) {
+      console.error('提交记录失败:', e);
+      return false;
+    }
   }
 
-  function renderLeaderboard() {
-    const data = getLeaderboard();
+  async function renderLeaderboard() {
+    lbTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#555;padding:12px">加载中...</td></tr>';
+    lbEmpty.style.display = 'none';
+
+    const data = await fetchLeaderboard();
+
     lbTbody.innerHTML = '';
-
-    if (data.length === 0) {
+    if (!data || data.length === 0) {
       lbEmpty.style.display = 'block';
       return;
     }
@@ -2141,7 +2152,7 @@
 
       let dateStr = '';
       try {
-        const d = new Date(entry.date);
+        const d = new Date(entry.created_at);
         dateStr = (d.getMonth()+1) + '/' + d.getDate();
       } catch(e) { dateStr = '-'; }
 
@@ -2170,15 +2181,17 @@
   }
 
   // ── 胜利弹窗事件 ──────────────────────────────────
-  victorySubmitBtn.addEventListener('click', () => {
+  victorySubmitBtn.addEventListener('click', async () => {
     let nickname = victoryNickname.value.trim();
     if (!nickname) nickname = '匿名玩家';
     const finalTime = parseInt(victoryOverlay.dataset.finalTime, 10) || gameTime;
     let finalDeaths = parseInt(victoryOverlay.dataset.finalDeaths, 10);
     if (isNaN(finalDeaths)) finalDeaths = deathCount;
-    saveToLeaderboard(nickname, finalTime, finalDeaths);
-    victorySubmitBtn.textContent = '✅ 已提交';
+    victorySubmitBtn.textContent = '⏳ 提交中...';
     victorySubmitBtn.disabled = true;
+    const ok = await saveToLeaderboard(nickname, finalTime, finalDeaths);
+    victorySubmitBtn.textContent = ok ? '✅ 已提交' : '❌ 失败，请重试';
+    if (!ok) victorySubmitBtn.disabled = false;
   });
 
   victoryLeaderboardBtn.addEventListener('click', () => {

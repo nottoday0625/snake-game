@@ -1,0 +1,8 @@
+name = "snake-game"
+pages_build_output_dir = "."
+compatibility_date = "2025-08-11"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "snake-leaderboard"
+database_id = "e2cadfd1-59da-4c6b-aeeb-cc78f86d2510"
