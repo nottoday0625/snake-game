@@ -2179,10 +2179,6 @@
     saveToLeaderboard(nickname, finalTime, finalDeaths);
     victorySubmitBtn.textContent = '✅ 已提交';
     victorySubmitBtn.disabled = true;
-    setTimeout(() => {
-      victorySubmitBtn.textContent = '📋 提交记录';
-      victorySubmitBtn.disabled = false;
-    }, 2000);
   });
 
   victoryLeaderboardBtn.addEventListener('click', () => {
