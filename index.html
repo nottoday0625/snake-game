@@ -1954,6 +1954,8 @@
     paused = true;
     countdownRemaining = 0;
     if (currentLevel >= LEVELS.length) {
+      // 五关全过 → 重置到第一关
+      try { localStorage.setItem('snake-level-progress', '1'); } catch(e) {}
       if (score > highScore) {
         highScore = score;
         try { localStorage.setItem('snake-high-score', highScore); } catch(e) {}
@@ -1971,7 +1973,9 @@
       lvlNextBtn.textContent = '▶ 进入下一关';
       lvlNextBtn.onclick = () => {
         scoreEl.textContent = score;
-        startLevel(currentLevel + 1);
+        const nextLevel = currentLevel + 1;
+        try { localStorage.setItem('snake-level-progress', String(nextLevel)); } catch(e) {}
+        startLevel(nextLevel);
       };
       levelOverlay.classList.add('active');
     }
@@ -1983,7 +1987,11 @@
 
     if (mode === 'level') {
       levelBar.classList.add('visible');
-      currentLevel = 1;
+      // 读取保存的闯关进度（五关全过则从第1关开始）
+      let savedLevel = 1;
+      try { savedLevel = parseInt(localStorage.getItem('snake-level-progress'), 10) || 1; } catch(e) {}
+      if (savedLevel > LEVELS.length) savedLevel = 1;
+      currentLevel = savedLevel;
       score = 0;
       levelStartScore = 0;
       gameTime = 0;
@@ -2163,6 +2171,7 @@
     gameTime = 0;
     deathCount = 0;
     currentLevel = 1;
+    try { localStorage.setItem('snake-level-progress', '1'); } catch(e) {}
     scoreEl.textContent = '0';
     reset();
   });
