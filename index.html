@@ -1034,7 +1034,7 @@
   let highScore = 0;
   let gameOver = false;
   let paused   = false;
-  let speed    = 130;
+  let speed    = 140;
   let tickAcc  = 0;
   let lastTime = 0;
   let particles = [];
@@ -1109,26 +1109,24 @@
   // ── 关卡定义 ─────────────────────────────────────
   const LEVELS = [
     {
-      name: '初入蛇穴', target: 50, speed: 130,
+      name: '初入蛇穴', target: 50, speed: 140,
       obstacles: dedupe([].concat(
         vLine(18, 4, 16),
         hLine(3, 8, 6), hLine(15, 8, 5),
-        hLine(3, 16, 6), hLine(15, 16, 5),
       ))
     },
     {
-      name: '曲折前进', target: 120, speed: 115,
+      name: '曲折前进', target: 120, speed: 125,
       obstacles: dedupe([].concat(
         vLine(3, 3, 7), hLine(3, 3, 7),
         vLine(20, 3, 7), hLine(14, 3, 7),
         vLine(3, 14, 7), hLine(3, 17, 7),
         vLine(20, 14, 7), hLine(14, 17, 7),
-        rectObs(10, 7, 4, 1), rectObs(10, 16, 4, 1),
         rectObs(7, 11, 1, 2), rectObs(16, 11, 1, 2),
       ))
     },
     {
-      name: '迷宫探险', target: 210, speed: 100,
+      name: '迷宫探险', target: 210, speed: 110,
       obstacles: dedupe([].concat(
         hLine(3, 3, 9), hLine(12, 3, 9),
         hLine(3, 20, 9), hLine(12, 20, 9),
@@ -1136,12 +1134,10 @@
         vLine(20, 5, 6), vLine(20, 13, 6),
         hLine(8, 10, 8), hLine(8, 13, 8),
         vLine(10, 10, 4),
-        rectObs(0, 0, 3, 1), rectObs(21, 0, 3, 1),
-        rectObs(0, 23, 3, 1), rectObs(21, 23, 3, 1),
       ))
     },
     {
-      name: '步步惊心', target: 320, speed: 85,
+      name: '步步惊心', target: 320, speed: 95,
       obstacles: dedupe([].concat(
         hLine(2, 2, 8), hLine(14, 2, 8),
         hLine(2, 21, 8), hLine(14, 21, 8),
@@ -1151,12 +1147,11 @@
         hLine(5, 15, 5), hLine(14, 15, 5),
         vLine(8, 5, 5), vLine(8, 14, 5),
         vLine(15, 5, 5), vLine(15, 14, 5),
-        rectObs(10, 11, 4, 2),
         rectObs(9, 9, 1, 6), rectObs(14, 9, 1, 6),
       ))
     },
     {
-      name: '终极挑战', target: 450, speed: 70,
+      name: '终极挑战', target: 450, speed: 80,
       obstacles: dedupe([].concat(
         hLine(1, 1, 7), hLine(9, 1, 6), hLine(16, 1, 7),
         hLine(1, 22, 7), hLine(9, 22, 6), hLine(16, 22, 7),
@@ -1167,7 +1162,6 @@
         vLine(5, 7, 4), vLine(5, 13, 4),
         vLine(18, 7, 4), vLine(18, 13, 4),
         hLine(7, 11, 3), hLine(14, 11, 3),
-        rectObs(10, 7, 4, 2), rectObs(10, 15, 4, 2),
         rectObs(8, 10, 2, 4), rectObs(14, 10, 2, 4),
         rectObs(2, 2, 4, 2), rectObs(18, 2, 4, 2),
         rectObs(2, 20, 4, 2), rectObs(18, 20, 4, 2),
@@ -1199,7 +1193,7 @@
   function spawnSpecial() {
     let pos;
     do { pos = gridPos(); } while (occupies(pos) || (food && pos.x === food.x && pos.y === food.y));
-    return { ...pos, life: 80 };
+    return { ...pos, life: 100 };
   }
 
   // ── 粒子系统 ─────────────────────────────────────
@@ -1281,7 +1275,7 @@
       food = spawnFood();
     } else {
       score = 0;
-      speed = 130;
+      speed = 140;
       obstacles = [];
       levelTransition = false;
       countdownRemaining = 0;
@@ -1573,8 +1567,8 @@
       emitParticles(food.x, food.y, `rgb(${currentTheme.glow.join(',')})`, 12);
       food = spawnFood();
 
-      if (gameMode === 'classic' && speed > 60) {
-        speed = Math.max(60, speed - 2);
+      if (gameMode === 'classic' && speed > 65) {
+        speed = Math.max(65, speed - 1.5);
       }
 
       scoreEl.textContent = score;
@@ -2012,7 +2006,7 @@
       gameTime = 0;
       deathCount = 0;
       obstacles = [];
-      speed = 130;
+      speed = 140;
       levelTransition = false;
       levelOverlay.classList.remove('active');
       victoryOverlay.classList.remove('active');
