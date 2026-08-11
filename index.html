@@ -1192,7 +1192,7 @@
   function spawnSpecial() {
     let pos;
     do { pos = gridPos(); } while (occupies(pos) || (food && pos.x === food.x && pos.y === food.y));
-    return { ...pos, life: 110 };
+    return { ...pos, life: 160 };
   }
 
   // ── 粒子系统 ─────────────────────────────────────
