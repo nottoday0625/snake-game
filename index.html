@@ -1970,7 +1970,9 @@
     paused = true;
     countdownRemaining = 0;
     if (currentLevel >= LEVELS.length) {
-      // 五关全过 → 重置到第一关
+      // 五关全过 → 先保存最终成绩，再重置进度
+      const finalTime = gameTime;
+      const finalDeaths = deathCount;
       gameTime = 0; deathCount = 0;
       saveLevelProgress();
       if (score > highScore) {
@@ -1978,8 +1980,11 @@
         try { localStorage.setItem('snake-high-score', highScore); } catch(e) {}
         bestEl.textContent = highScore;
       }
-      victoryTime.textContent = formatDuration(gameTime);
-      victoryDeaths.textContent = deathCount;
+      victoryTime.textContent = formatDuration(finalTime);
+      victoryDeaths.textContent = finalDeaths;
+      // 存到 DOM 上供提交排行榜使用
+      victoryOverlay.dataset.finalTime = finalTime;
+      victoryOverlay.dataset.finalDeaths = finalDeaths;
       victoryNickname.value = '';
       victoryOverlay.classList.add('active');
       setTimeout(() => { victoryNickname.focus(); }, 400);
@@ -2168,7 +2173,10 @@
   victorySubmitBtn.addEventListener('click', () => {
     let nickname = victoryNickname.value.trim();
     if (!nickname) nickname = '匿名玩家';
-    saveToLeaderboard(nickname, gameTime, deathCount);
+    const finalTime = parseInt(victoryOverlay.dataset.finalTime, 10) || gameTime;
+    let finalDeaths = parseInt(victoryOverlay.dataset.finalDeaths, 10);
+    if (isNaN(finalDeaths)) finalDeaths = deathCount;
+    saveToLeaderboard(nickname, finalTime, finalDeaths);
     victorySubmitBtn.textContent = '✅ 已提交';
     victorySubmitBtn.disabled = true;
     setTimeout(() => {
