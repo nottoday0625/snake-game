@@ -1,16 +1,10 @@
 # 贪吃蛇 · 五关计时挑战
 
-**[在线试玩](https://snake-game-cuy.pages.dev/?_wv=1)**
+**[立即在线试玩](https://snake-game-cuy.pages.dev/?_wv=1)**
 
-在经典模式里挑战最高分，或切换到闯关模式，一口气穿过五张地图。游戏会记录你的通关用时，以及一路上重试了多少次。
+在手机或电脑浏览器里打开游戏，选择「闯关」。通过第五关后，输入昵称并点「提交记录」，就能和其他玩家比较通关用时。点奖杯可查看共享榜单上最快的 50 条记录，以及每条记录的死亡次数。
 
-## 开始游戏
-
-下载并解压本仓库，在浏览器中打开 [index.html](./index.html) 即可游玩两种模式，无需安装依赖。也可以用 Git 下载源码：
-
-```sh
-git clone https://github.com/nottoday0625/snake-game.git
-```
+## 操作
 
 | 操作 | 键盘 | 触屏 |
 | --- | --- | --- |
@@ -22,10 +16,16 @@ git clone https://github.com/nottoday0625/snake-game.git
 
 - **经典模式**：普通食物加 10 分，金色食物加 30 分。吃下普通食物会逐渐加速。越过棋盘边缘会从对侧出现，可以利用这条路线绕开自己的蛇身。
 - **闯关模式**：从「初入蛇穴」到「终极挑战」，每关都要在避开障碍的同时达到本关目标分。撞上障碍或蛇身后可以重试当前关，死亡次数会计入最终成绩。
-- **通关排行榜**：在线试玩时，完成第五关后输入昵称，点「提交记录」保存成绩。点奖杯可以查看用时最短的 50 条记录，以及每条记录对应的死亡次数。
 
 ## 排行榜如何工作
 
 [游戏前端](./index.html) 用原生 JavaScript 和 Canvas 绘制棋盘，键盘、滑动和虚拟方向键共用同一套转向逻辑。浏览器通过 `localStorage` 保存最高分和闯关进度。
 
-共享榜单需要运行在服务端。提交成绩时，前端向同源的 `/api/leaderboard` 发送 `POST` 请求；打开榜单时，用 `GET` 请求读取记录。[Cloudflare Pages Function](./functions/api/leaderboard.js) 通过 [Wrangler 配置](./wrangler.toml) 中名为 `DB` 的绑定读写 D1 数据库。直接打开本地 HTML 即可练习闯关，跨设备提交和查看成绩需要连接上述服务。
+共享榜单需要运行在服务端。提交成绩时，前端向同源的 `/api/leaderboard` 发送 `POST` 请求；打开榜单时，用 `GET` 请求读取记录。[Cloudflare Pages Function](./functions/api/leaderboard.js) 通过 [Wrangler 配置](./wrangler.toml) 中名为 `DB` 的绑定读写 D1 数据库。
+
+<details>
+<summary>本地练习</summary>
+
+下载并解压仓库后，用浏览器打开 `index.html` 即可练习经典模式和闯关模式。本地直接打开的游戏无法读取或提交共享榜单成绩。
+
+</details>
